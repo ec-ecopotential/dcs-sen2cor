@@ -1,0 +1,128 @@
+#!/bin/bash
+
+# source the ciop functions (e.g. ciop-log, ciop-getparam)
+source ${ciop_job_include}
+
+# define the exit codes
+SUCCESS=0
+ERR_NO_RESOLUTION=5
+ERR_DOWNLOAD_1C=10
+ERR_GRANULE_DIR=15
+ERR_SEN2COR=20
+ERR_LEVEL_2A_DIR=25
+ERR_COMPRESSION=30
+ERR_PUBLISH=35
+
+# add a trap to exit gracefully
+function cleanExit ()
+{
+  local retval=$?
+  local msg=""
+  case "${retval}" in
+    ${SUCCESS}) msg="Processing successfully concluded";;
+    ${ERR_NO_RESOLUTION}) msg="No target resolution provided, must be one of 10, 20 or 60";;
+    ${ERR_DOWNLOAD_1C}) msg="Failed to retrieve Sentinel-2 Level 1C product";;
+    ${ERR_GRANULE_DIR}) msg="Couldn't find the Sentinel-2 Level 1C product granule directory";;
+    ${ERR_SEN2COR}) msg="SEN2COR main binary L2A_Process failed";;
+    ${ERR_LEVEL_2A_DIR}) msg="Couldn't find the Sentinel-2 Level 2A product";;
+    ${ERR_COMPRESSION}) msg="Failed to compress the Sentinel-2 Level 2A product";;
+    ${ERR_PUBLISH}) msg="Failed to publish the Sentinel-2 Level 2A product";;
+    *) msg="Unknown error";;
+  esac
+
+  [ "${retval}" != "0" ] && ciop-log "ERROR" "Error ${retval} - ${msg}, processing aborted" || ciop-log "INFO" "${msg}"
+  exit ${retval}
+}
+
+trap cleanExit EXIT
+
+
+function sen2cor_env() {
+
+  # setup SEN2COR environment
+  export SEN2COR_BIN=/opt/anaconda/lib/python2.7/site-packages/sen2cor
+  export GDAL_DATA=/opt/anaconda/share/gdal
+  export PATH=/opt/anaconda/bin/:$PATH
+  export SEN2COR_HOME=$TMPDIR/sen2cor/
+
+  mkdir -p $TMPDIR/sen2cor/cfg
+  cp $SEN2COR_BIN/cfg/L2A_GIPP.xml $SEN2COR_HOME/cfg
+
+}
+
+function process_2A() {
+
+  local ref=$1
+  local granules=$2
+  local resolution=$3
+  local online_resource=""
+  
+  read identifier online_resource < <( opensearch-client ${ref} identifier,enclosure | tr "," " " )
+  
+  [ -z ${online_resource} ] && return ${ERR_NO_RESOLUTION} 
+
+  # temporary patch
+  online_resource="s3://eo-samples/${identifier}.zip"
+  online_resource="file:///tmp/${identifier}.zip"
+  # end of patch
+
+  local_s2="$( echo "${online_resource}" | ciop-copy -O ${TMPDIR} - )"
+
+
+  [ ! -d ${local_s2} ] && return ${ERR_DOWNLOAD_1C}
+
+  cd ${local_s2}
+
+  granule_path=${identifier}.SAFE/GRANULE
+
+  [ ! -d ${granule_path} ] && return ${ERR_GRANULE_DIR}
+
+  ls ${granule_path} | grep -Ev ${granules} | while read dead_granule
+  do
+    ciop-log "INFO" "Excluding granule ${dead_granule}"
+    rm -fr ${granule_path}/${dead_granule}
+  done
+
+  ciop-log "INFO" "Invoke SEN2COR L2A_Process"
+  L2A_Process --resolution ${resolution} ${identifier}.SAFE # || return ${ERR_SEN2COR}
+
+  level_2a="$( echo ${identifier} | sed 's/OPER/USER/' | sed 's/MSIL1C/MSIL2A/' ).SAFE"
+ 
+  [ ! -d ${level_2a} ] && return ${ERR_LEVEL_2A_DIR}
+
+  ciop-log "INFO" "Compression and publish of Level 2A"
+  
+  tar cvfz ${identifier}.tgz ${level_2a} || return ${ERR_COMPRESSION}
+ 
+  ciop-publish -m ${local_s2}/${identifier}.tgz || return ${ERR_PUBLISH}
+
+  cd ${TMPDIR}
+
+  rm -fr ${identifier}
+
+}
+
+function main() {
+
+  sen2cor_env
+
+  # report activity in log
+  ciop-log "INFO" "Doing..."
+
+  local resolution="$( ciop-getparam resolution)"
+
+  while read input 
+  do
+    ref="$( echo $input | cut -d "," -f 1)"
+    granules="$( echo $input | cut -d "," -f 2- | tr "," "|")"
+ 
+    ciop-log "INFO" "Processsing $( echo ${granules} | tr "|" "\n" | wc -l ) of $(basename ${ref} )"
+
+    process_2A ${ref} ${granules} ${resolution} || return $?
+
+  done
+
+}
+
+cat | main || exit $?
+

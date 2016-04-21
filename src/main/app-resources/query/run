@@ -1,0 +1,79 @@
+#!/bin/bash
+
+# source the ciop functions (e.g. ciop-log, ciop-getparam)
+source ${ciop_job_include}
+
+SUCCESS=0
+ERR_CAT_REF=2
+ERR_NO_TILES=4
+ERR_PUBLISH_S=6
+
+function cleanExit ()
+{
+  local retval=$?
+  local msg=""
+  case "${retval}" in
+    ${SUCCESS}) msg="Processing successfully concluded";;
+    ${ERR_CAT_REF}) msg="Failed to query Level 1C product";;
+    ${ERR_NO_TILES}) msg="Failed to discover tiles";;
+    ${ERR_PUBLISH_S}) msg="Failed to publish product reference and tile identifiers";;
+    *) msg="Unknown error";;
+  esac
+
+  # clean up working space
+  rm -fr ${TMPDIR}
+
+  [ "${retval}" != "0" ] && ciop-log "ERROR" "Error ${retval} - ${msg}, processing aborted" || ciop-log "INFO" "${msg}"
+  exit ${retval}
+}
+
+trap cleanExit EXIT
+
+function product2tiles () {
+
+  local identifier=""
+  local self=""
+  local startdate=""
+  local enddate=""
+  local tiles=""
+  
+  local ref=$1  
+
+  read identifier self startdate enddate < <( opensearch-client ${ref} identifier,self,startdate,enddate | tr "," " " )
+
+  [ -z ${self} ] || [ -z ${startdate} ] || [ -z ${enddate} ] && return ${ERR_CAT_REF}
+
+  tiles="$( opensearch-client \
+    -p "pt=S2MSI1CT" \
+    -p "bbox=${bbox}" \
+    -p "start=${startdate}" \
+    -p "stop=${enddate}" \
+    https://data2.terradue.com/eop/sentinel2/dataset/search identifier | tr "\n" ","  | rev | cut -c 2- | rev )"
+
+  [ -z ${tiles} ] && return ${ERR_NO_TILES} 
+ 
+  ciop-log "INFO" "Identified $( echo ${tiles} | tr "," "\n" | wc -l ) tiles in ${identifier}"
+  
+  echo "${self},${tiles}" | ciop-publish -s || return ${ERR_PUBLISH_S}
+
+}
+
+function main () {
+
+  bbox="$( ciop-getparam bbox)"
+  # report activity in log
+  ciop-log "INFO" "Processing ${bbox}"
+
+  while read ref
+  do
+    ciop-log "INFO" "reference: ${ref}"
+  
+    product2tiles ${ref} || return $?
+  
+  done
+
+}
+
+cat | main || exit $?
+
+exit 0

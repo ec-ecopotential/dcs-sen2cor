@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>com.terradue</groupId>
+	<artifactId>dcs-sen2cor</artifactId>
+	<packaging>pom</packaging>
+	<name>dcs-bash</name>
+	<description>dcs-bash</description>
+	<version>0.1-SNAPSHOT</version>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.build.resourceEncoding>UTF-8</project.build.resourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<maven.deploy.skip>true</maven.deploy.skip>
+	</properties>
+
+	<repositories>
+		<repository>
+			<id>repository.terradue.com</id>
+			<name>repository.terradue.com-releases</name>
+			<url>http://repository.terradue.com/artifactory/libs-release-public</url>
+			<releases>
+				<checksumPolicy>warn</checksumPolicy>
+			</releases>
+		</repository>
+	</repositories>
+
+	<pluginRepositories>
+		<pluginRepository>
+			<snapshots />
+			<id>repository.terradue.com</id>
+			<name>repository.terradue.com-releases</name>
+			<url>http://repository.terradue.com/artifactory/libs-release-public</url>
+		</pluginRepository>
+	</pluginRepositories>
+
+	<build>
+		<plugins>
+
+			<plugin>
+				<artifactId>maven-clean-plugin</artifactId>
+				<version>2.5</version>
+				<configuration>
+					<filesets>
+						<fileset>
+							<directory>/application</directory>
+							<includes>
+								<include>**/*</include>
+							</includes>
+							<excludes>
+								<exclude>**/share/**</exclude>
+							</excludes>
+							<followSymlinks>false</followSymlinks>
+						</fileset>
+					</filesets>
+				</configuration>
+			</plugin>
+		
+			<plugin>
+				<artifactId>maven-resources-plugin</artifactId>
+				<version>2.6</version>
+				<executions>
+					<execution>
+						<id>copy-app-resources</id>
+						<phase>install</phase>
+						<goals>
+							<goal>copy-resources</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>/application</outputDirectory>
+							<resources>
+								<resource>
+									<directory>${basedir}/src/main/app-resources/</directory>
+								</resource>
+							</resources>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<version>1.6</version>
+				<executions>
+					<execution>
+						<id>change perm</id>
+						<phase>install</phase>
+						<configuration>
+							<target>
+								<chmod dir="/application" includes="**/run" perm="755" />
+								<chmod file="/application/application.xml" perm="664"/>
+							</target>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>rpm-maven-plugin</artifactId>
+				<version>2.1.2</version>
+				<extensions>true</extensions>
+				<executions>
+					<execution>
+						<id>generate-rpm</id>
+							<goals>
+						<goal>rpm</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<copyright>${project.inceptionYear}, Terradue, GPL</copyright>
+					<distribution>Terradue ${project.inceptionYear}</distribution>
+					<group>scoop</group>
+					<packager>Terradue</packager>
+					<name>${project.artifactId}</name>
+					<defaultDirmode>775</defaultDirmode>
+					<defaultFilemode>644</defaultFilemode>
+					<defaultUsername>root</defaultUsername>
+					<defaultGroupname>root</defaultGroupname>
+					<autoRequires>false</autoRequires>
+					<autoProvides>false</autoProvides>
+					<description>Developer Cloud Sandbox for Sentinel-2 Atmospheric Correction using SEN2COR</description>
+					<summary>Developer Cloud Sandbox for Sentinel-2 Atmospheric Correction using SEN2COR</summary>
+					<executions>
+						
+						<execution>
+							<id>generate-rpm</id>
+							<goals>
+								<goal>rpm</goal>
+							</goals>
+						</execution>
+
+					</executions>
+					<mappings>
+						
+						<mapping>
+							<directory>/application</directory>
+							<sources>
+								<source>
+									<location>${basedir}/src/main/app-resources/</location>
+								</source>
+							</sources>
+						</mapping>
+
+						<mapping>
+                                                        <directory>/application</directory>
+                                                        <sources>
+                                                                <source>
+                                                                        <location>${basedir}/src/main/app-resources</location>
+                                                                        <includes>
+                                                                                <include>application.xml</include>
+                                                                        </includes>
+                                                                </source>
+                                                        </sources>
+                                                        <filemode>664</filemode>
+                                                </mapping>
+
+						<mapping>
+							<directory>/application</directory>
+							<sources>
+								<source>
+									<location>${basedir}/src/main/app-resources</location>
+									<includes>
+										<include>**/run</include>
+									</includes>
+								</source>
+							</sources>
+							<filemode>755</filemode>
+						</mapping>
+					
+					</mappings>
+				
+					<provides>
+						<provide>${project.artifactId}</provide>
+					</provides>
+				<!--
+					<requires>
+						<require></require>
+					</requires>
+				-->
+				</configuration>
+			</plugin>
+
+
+		</plugins>
+	</build>
+
+</project>
