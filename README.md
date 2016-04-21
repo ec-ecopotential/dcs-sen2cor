@@ -107,7 +107,7 @@ Or invoke the Web Processing Service via the Sandbox dashboard providing:
 
 To learn more and find information go to 
 
-* [Developer Cloud Sandbox](http://docs.terradue.com/developer) service 
+* [Developer Cloud Sandbox](http://docs.terradue.com/developer) 
 * [SEN2COR FTP](http://s2tbx.telespazio-vega.de/sen2cor/)
 * [SEN2COR forum](http://forum.step.esa.int/t/sen2cor-tool/468)
 
