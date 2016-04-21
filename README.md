@@ -76,7 +76,7 @@ Install the downloaded package by running these commands in a shell:
 sudo yum -y install dcs-sen2cor-<version>.x86_64.rpm
 ```
 
-> At this stage there are no releases yet due to a known limitations in SEN2COR
+> At this stage there are no releases yet due to a known limitations in SEN2COR described [here](http://forum.step.esa.int/t/sen2cor-writes-files-in-the-installation-folder-at-runtime/2013)
 
 #### Using the development version
 
