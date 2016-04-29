@@ -16,7 +16,14 @@
     <jobTemplate id="sen2cor">
       <streamingExecutable>/application/sen2cor/run</streamingExecutable>
       <defaultParameters>
-        <parameter id="resolution" scope="runtime" maxOccurs="1" title="Resolution for Sentinel-2 Level-2A product in meters (10, 20 or 60)" abstract="Resolution for Sentinel-2 Level-2A product in meters (10, 20 or 60). The bands are resampled to the selceted target resolution" >60</parameter>
+        <parameter id="resolution" scope="runtime" maxOccurs="1" title="Resolution for Sentinel-2 Level-2A product in meters (10, 20 or 60)" abstract="Resolution for Sentinel-2 Level-2A product in meters (10, 20 or 60). The bands are resampled to the selceted target resolution">
+ <options>
+        <option>10</option>
+        <option>20</option>
+        <option>60</option>
+        <default>60</default>
+    </options>
+</parameter>
       </defaultParameters>
       <defaultJobconf>
         <property id="ciop.job.max.tasks">1</property>
@@ -29,7 +36,7 @@
     <node id="query">
       <job id="query"/>
       <sources>
-        <source id="series" refid="cas:series">https://data2.terradue.com/eop/sentinel2/dataset/description</source>
+        <source id="series" refid="cas:series">https://data2.terradue.com/eop/eo-samples/series/sentinel-2/description</source>
       </sources>
     </node>
     <node id="sen2cor">

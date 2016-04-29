@@ -61,13 +61,7 @@ function process_2A() {
   
   [ -z ${online_resource} ] && return ${ERR_NO_RESOLUTION} 
 
-  # temporary patch
-  online_resource="s3://eo-samples/${identifier}.zip"
-  online_resource="file:///tmp/${identifier}.zip"
-  # end of patch
-
   local_s2="$( echo "${online_resource}" | ciop-copy -O ${TMPDIR} - )"
-
 
   [ ! -d ${local_s2} ] && return ${ERR_DOWNLOAD_1C}
 
@@ -116,7 +110,7 @@ function main() {
     ref="$( echo $input | cut -d "," -f 1)"
     granules="$( echo $input | cut -d "," -f 2- | tr "," "|")"
  
-    ciop-log "INFO" "Processsing $( echo ${granules} | tr "|" "\n" | wc -l ) of $(basename ${ref} )"
+    ciop-log "INFO" "Processsing $( echo ${granules} | tr "|" "\n" | wc -l ) tiles of Sentinel-2 product $( opensearch-client ${ref} identifier )"
 
     process_2A ${ref} ${granules} ${resolution} || return $?
 
