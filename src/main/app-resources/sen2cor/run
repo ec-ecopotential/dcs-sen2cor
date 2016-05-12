@@ -2,7 +2,7 @@
 
 # source the ciop functions (e.g. ciop-log, ciop-getparam)
 source ${ciop_job_include}
-
+set -x
 # define the exit codes
 SUCCESS=0
 ERR_NO_RESOLUTION=5
@@ -55,6 +55,7 @@ function process_2A() {
   local ref=$1
   local granules=$2
   local resolution=$3
+  local format=$4
   local online_resource=""
   
   read identifier online_resource < <( opensearch-client ${ref} identifier,enclosure | tr "," " " )
@@ -78,21 +79,48 @@ function process_2A() {
   done
 
   ciop-log "INFO" "Invoke SEN2COR L2A_Process"
-  L2A_Process --resolution ${resolution} ${identifier}.SAFE # || return ${ERR_SEN2COR}
+  L2A_Process --resolution ${resolution} ${identifier}.SAFE 1>&2 # || return ${ERR_SEN2COR}
 
-  level_2a="$( echo ${identifier} | sed 's/OPER/USER/' | sed 's/MSIL1C/MSIL2A/' ).SAFE"
+  level_2a="$( echo ${identifier} | sed 's/OPER/USER/' | sed 's/MSIL1C/MSIL2A/' )"
  
-  [ ! -d ${level_2a} ] && return ${ERR_LEVEL_2A_DIR}
+  [ ! -d ${level_2a}.SAFE ] && return ${ERR_LEVEL_2A_DIR}
 
-  ciop-log "INFO" "Compression and publish of Level 2A"
+  [ "${format}" == "GeoTiff" ] && {
+ 
+    cd ${level_2a}.SAFE
+
+    metadata="$( find . -maxdepth 1 -name "S2A*.xml" )"
+    counter=0
+    gdalinfo ${metadata} 2> /dev/null | grep -E  "SUBDATASET_._NAME" \
+      | grep -v "PREVIEW" | cut -d "=" -f 2 | while read subset
+    do 
+      ciop-log "INFO" "Process ${subset}"
+      gdal_translate \
+        ${subset} \
+        ${TMPDIR}/${level_2a}_${counter}.TIF 1>&2 || return ${ERR_GDAL_TRANSLATE}
+
+      gzip ${TMPDIR}/${level_2a}_${counter}.TIF 1>&2
+      echo ${TMPDIR}/${level_2a}_${counter}.TIF.gz   
+   done
+
+  } || {
+
+    ciop-log "INFO" "Compression Level 2A in SAFE format"
   
-  tar cvfz ${identifier}.tgz ${level_2a} || return ${ERR_COMPRESSION}
+    tar cfz ${TMPDIR}/${level_2a}.tgz ${level_2a} 1>&2 || return ${ERR_COMPRESSION}
  
-  ciop-publish -m ${local_s2}/${identifier}.tgz || return ${ERR_PUBLISH}
+    echo ${TMPDIR}/${level_2a}.tgz
 
-  cd ${TMPDIR}
+  }
 
-  rm -fr ${identifier}
+}
+
+function setGDALEnv() {
+
+  export GDAL_HOME=/usr/local/gdal-t2
+  export PATH=$GDAL_HOME/bin/:$PATH
+  export LD_LIBRARY_PATH=$GDAL_HOME/lib/:$LD_LIBRARY_PATH
+  export GDAL_DATA=$GDAL_HOME/share/gdal
 
 }
 
@@ -100,11 +128,13 @@ function main() {
 
   sen2cor_env
 
+  setGDALEnv
   # report activity in log
   ciop-log "INFO" "Doing..."
 
   local resolution="$( ciop-getparam resolution)"
-
+  local format="$( ciop-getparam format )"
+  
   while read input 
   do
     ref="$( echo $input | cut -d "," -f 1)"
@@ -112,8 +142,14 @@ function main() {
  
     ciop-log "INFO" "Processsing $( echo ${granules} | tr "|" "\n" | wc -l ) tiles of Sentinel-2 product $( opensearch-client ${ref} identifier )"
 
-    process_2A ${ref} ${granules} ${resolution} || return $?
+    results="$( process_2A ${ref} ${granules} ${resolution} ${format} || return $? )"
 
+    for result in ${results}
+    do 
+      ciop-publish -m ${result} || return ${ERR_PUBLISH}
+    done
+    
+    rm -fr S2*
   done
 
 }

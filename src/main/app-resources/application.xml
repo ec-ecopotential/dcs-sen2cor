@@ -24,6 +24,13 @@
         <default>60</default>
     </options>
 </parameter>
+ <parameter id="format" scope="runtime" maxOccurs="1" title="Sentinel-2 Level 2A output format (SAFE or GeoTiff)" abstract="entinel-2 Level 2A output format (SAFE or GeoTiff)">
+          <options>
+            <option>SAFE</option>
+<option>GeoTiff</option>
+            <default>GeoTiff</default>
+          </options>
+        </parameter>
       </defaultParameters>
       <defaultJobconf>
         <property id="ciop.job.max.tasks">1</property>
