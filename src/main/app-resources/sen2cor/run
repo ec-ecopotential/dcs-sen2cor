@@ -2,7 +2,8 @@
 
 # source the ciop functions (e.g. ciop-log, ciop-getparam)
 source ${ciop_job_include}
-set -x
+#set -x
+
 # define the exit codes
 SUCCESS=0
 ERR_NO_RESOLUTION=5
@@ -36,12 +37,19 @@ function cleanExit ()
 
 trap cleanExit EXIT
 
+function setGDALEnv() {
+  # setup GDAL environment
+  export GDAL_HOME=/opt/anaconda/pkgs/gdal-2.1.0-py27_0
+  export PATH=$GDAL_HOME/bin/:$PATH
+  export LD_LIBRARY_PATH=$GDAL_HOME/lib/:/opt/anaconda/pkgs/geos-3.4.2-0/lib:/opt/anaconda/lib:$LD_LIBRARY_PATH
+  export GDAL_DATA=$GDAL_HOME/share/gdal
+}
 
 function sen2cor_env() {
 
   # setup SEN2COR environment
   export SEN2COR_BIN=/opt/anaconda/lib/python2.7/site-packages/sen2cor
-  export GDAL_DATA=/opt/anaconda/share/gdal
+  #export GDAL_DATA=/opt/anaconda/share/gdal
   export PATH=/opt/anaconda/bin/:$PATH
   export SEN2COR_HOME=$TMPDIR/sen2cor/
 
@@ -81,7 +89,9 @@ function process_2A() {
   ciop-log "INFO" "Invoke SEN2COR L2A_Process"
   L2A_Process --resolution ${resolution} ${identifier}.SAFE 1>&2 # || return ${ERR_SEN2COR}
 
-  level_2a="$( echo ${identifier} | sed 's/OPER/USER/' | sed 's/MSIL1C/MSIL2A/' )"
+  [ "${format}" == "GeoTiff" ] && level_2a="$( echo ${identifier} | sed 's/OPER/USER/' | sed 's/MSIL1C/MSIL2A/' )" || level_2a="${identifier}"
+
+  #ciop-log "DEBUG" "$PWD; ${level_2a}; $( ls -l )"
  
   [ ! -d ${level_2a}.SAFE ] && return ${ERR_LEVEL_2A_DIR}
 
@@ -106,8 +116,8 @@ function process_2A() {
   } || {
 
     ciop-log "INFO" "Compression Level 2A in SAFE format"
-  
-    tar cfz ${TMPDIR}/${level_2a}.tgz ${level_2a} 1>&2 || return ${ERR_COMPRESSION}
+ 
+    tar cfz ${TMPDIR}/${level_2a}.tgz "${level_2a}.SAFE" 1>&2 || return ${ERR_COMPRESSION}
  
     echo ${TMPDIR}/${level_2a}.tgz
 
@@ -115,20 +125,14 @@ function process_2A() {
 
 }
 
-function setGDALEnv() {
-
-  export GDAL_HOME=/usr/local/gdal-t2
-  export PATH=$GDAL_HOME/bin/:$PATH
-  export LD_LIBRARY_PATH=$GDAL_HOME/lib/:$LD_LIBRARY_PATH
-  export GDAL_DATA=$GDAL_HOME/share/gdal
-
-}
-
 function main() {
 
-  sen2cor_env
+  TMPDIR="/tmp/sen2cor/$( uuidgen )"
+  mkdir -p ${TMPDIR}
 
+  sen2cor_env
   setGDALEnv
+
   # report activity in log
   ciop-log "INFO" "Doing..."
 
@@ -149,7 +153,7 @@ function main() {
       ciop-publish -m ${result} || return ${ERR_PUBLISH}
     done
     
-    rm -fr S2*
+    #rm -fr S2*
   done
 
 }
