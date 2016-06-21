@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<EarthObservation xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.opengis.net/opt/2.1">
+<phenomenonTime xmlns="http://www.opengis.net/om/2.0">
+    <TimePeriod xmlns="http://www.opengis.net/gml/3.2">
+      <beginPosition/>
+      <endPosition/>
+    </TimePeriod>
+  </phenomenonTime>  
+  <metaDataProperty xmlns="http://www.opengis.net/eop/2.1">
+    <EarthObservationMetaData>
+      <productType/>
+<processing>
+        <ProcessingInformation>
+          <processingCenter/>
+          <processorName/>
+          <processorVersion/>
+          <nativeProductFormat/>
+        </ProcessingInformation>
+      </processing>
+  </EarthObservationMetaData>
+  </metaDataProperty>
+<procedure xmlns="http://www.opengis.net/om/2.0">
+    <EarthObservationEquipment xmlns="http://www.opengis.net/eop/2.1">
+      <boundedBy xmlns="http://www.opengis.net/gml/3.2" xsi:nil="true"/>
+      <platform>
+        <Platform>
+<shortName>S2A</shortName>
+              <serialIdentifier>2015-000A</serialIdentifier>        
+</Platform>
+      </platform>
+      <instrument>
+        <Instrument>
+<shortName>MSI</shortName>
+              <description>Multi-Spectral Instrument</description>        
+</Instrument>
+      </instrument>
+      <sensor>
+        <Sensor>
+          <sensorType>OPTICAL</sensorType>
+        </Sensor>
+      </sensor>
+      <acquisitionParameters>
+        <Acquisition>
+          <orbitDirection/>
+          <wrsLongitudeGrid/>
+          <orbitNumber/>
+        </Acquisition>
+      </acquisitionParameters>
+    </EarthObservationEquipment>
+  </procedure>
+</EarthObservation>

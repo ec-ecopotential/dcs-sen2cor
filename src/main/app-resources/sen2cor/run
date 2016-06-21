@@ -2,7 +2,9 @@
 
 # source the ciop functions (e.g. ciop-log, ciop-getparam)
 source ${ciop_job_include}
-#set -x
+
+source /application/sen2cor/lib/functions.sh
+
 
 # define the exit codes
 SUCCESS=0
@@ -66,7 +68,7 @@ function process_2A() {
   local format=$4
   local online_resource=""
   
-  read identifier online_resource < <( opensearch-client ${ref} identifier,enclosure | tr "," " " )
+  read identifier online_resource startdate enddate orbit_number wrslon < <( opensearch-client -m EOP ${ref} identifier,enclosure,startdate,enddate,orbitNumber,wrsLongitudeGrid  | tr "," " " )
   
   [ -z ${online_resource} ] && return ${ERR_NO_RESOLUTION} 
 
@@ -127,9 +129,6 @@ function process_2A() {
 
 function main() {
 
-  TMPDIR="/tmp/sen2cor/$( uuidgen )"
-  mkdir -p ${TMPDIR}
-
   sen2cor_env
   setGDALEnv
 
@@ -142,18 +141,85 @@ function main() {
   while read input 
   do
     ref="$( echo $input | cut -d "," -f 1)"
+
+    read identifier online_resource startdate enddate orbit_number wrslon < <( opensearch-client -m EOP ${ref} identifier,enclosure,startdate,enddate,orbitNumber,wrsLongitudeGrid  | tr "," " " )   
+
     granules="$( echo $input | cut -d "," -f 2- | tr "," "|")"
  
-    ciop-log "INFO" "Processsing $( echo ${granules} | tr "|" "\n" | wc -l ) tiles of Sentinel-2 product $( opensearch-client ${ref} identifier )"
+    ciop-log "INFO" "Processsing $( echo ${granules} | tr "|" "\n" | wc -l ) tiles of Sentinel-2 product ${identifier}"
 
     results="$( process_2A ${ref} ${granules} ${resolution} ${format} || return $? )"
 
     for result in ${results}
     do 
+      # update metadata
+      cp /application/sen2cor/etc/eop-template.xml ${result}.xml
+      target_xml=${result}.xml
+         
+       # set product type
+      metadata \
+        "//A:EarthObservation/D:metaDataProperty/D:EarthObservationMetaData/D:productType" \
+        "S2A_L2A_PROTO" \
+        ${target_xml}
+  
+      # set processor name
+      metadata \
+        "//A:EarthObservation/D:metaDataProperty/D:EarthObservationMetaData/D:processing/D:ProcessingInformation/D:processorName" \
+        "dcs-sen2cor" \
+        ${target_xml}
+
+      metadata \
+        "//A:EarthObservation/D:metaDataProperty/D:EarthObservationMetaData/D:processing/D:ProcessingInformation/D:processorVersion" \
+        "1.0" \
+        ${target_xml}
+
+      # set processor name
+      metadata \
+        "//A:EarthObservation/D:metaDataProperty/D:EarthObservationMetaData/D:processing/D:ProcessingInformation/D:nativeProductFormat" \
+        "${format}" \
+        ${target_xml}
+
+      # set processor name
+      metadata \
+        "//A:EarthObservation/D:metaDataProperty/D:EarthObservationMetaData/D:processing/D:ProcessingInformation/D:processingCenter" \
+        "Terradue Cloud Platform" \
+        ${target_xml}
+  
+      # set startdate
+      metadata \
+        "//A:EarthObservation/B:phenomenonTime/C:TimePeriod/C:beginPosition" \
+        "${startdate}" \
+        ${target_xml}
+
+      # set stopdate
+      metadata \
+        "//A:EarthObservation/B:phenomenonTime/C:TimePeriod/C:endPosition" \
+        "${enddate}" \
+        ${target_xml}   
+  
+      # set orbit direction
+      metadata \
+        "//A:EarthObservation/B:procedure/D:EarthObservationEquipment/D:acquisitionParameters/D:Acquisition/D:orbitDirection" \
+        "DESCENDING" \
+        ${target_xml}
+
+      # set wrsLongitudeGrid
+      metadata \
+        "//A:EarthObservation/B:procedure/D:EarthObservationEquipment/D:acquisitionParameters/D:Acquisition/D:wrsLongitudeGrid" \
+        "${wrslon}" \
+        ${target_xml} 
+
+      # set orbitnumber
+      metadata \
+        "//A:EarthObservation/B:procedure/D:EarthObservationEquipment/D:acquisitionParameters/D:Acquisition/D:orbitNumber" \
+        "${orbit_number}" \
+        ${target_xml}
+
       ciop-publish -m ${result} || return ${ERR_PUBLISH}
+      ciop-publish -m ${result}.xml || return ${ERR_PUBLISH}
     done
     
-    #rm -fr S2*
+    rm -fr S2*
   done
 
 }
