@@ -51,7 +51,6 @@ function sen2cor_env() {
 
   # setup SEN2COR environment
   export SEN2COR_BIN=/opt/anaconda/lib/python2.7/site-packages/sen2cor
-  #export GDAL_DATA=/opt/anaconda/share/gdal
   export PATH=/opt/anaconda/bin/:$PATH
   export SEN2COR_HOME=$TMPDIR/sen2cor/
 
@@ -93,8 +92,6 @@ function process_2A() {
 
   [ "${format}" == "GeoTiff" ] && level_2a="$( echo ${identifier} | sed 's/OPER/USER/' | sed 's/MSIL1C/MSIL2A/' )" || level_2a="${identifier}"
 
-  #ciop-log "DEBUG" "$PWD; ${level_2a}; $( ls -l )"
- 
   [ ! -d ${level_2a}.SAFE ] && return ${ERR_LEVEL_2A_DIR}
 
   [ "${format}" == "GeoTiff" ] && {
@@ -111,8 +108,8 @@ function process_2A() {
         ${subset} \
         ${TMPDIR}/${level_2a}_${counter}.TIF 1>&2 || return ${ERR_GDAL_TRANSLATE}
 
-      gzip ${TMPDIR}/${level_2a}_${counter}.TIF 1>&2
-      echo ${TMPDIR}/${level_2a}_${counter}.TIF.gz   
+      #gzip ${TMPDIR}/${level_2a}_${counter}.TIF 1>&2
+      echo ${TMPDIR}/${level_2a}_${counter}.TIF #.gz   
    done
 
   } || {
