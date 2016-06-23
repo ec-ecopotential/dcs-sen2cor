@@ -9,9 +9,10 @@
         <parameter id="enddate" type="opensearch" target="time:end" scope="runtime" maxOccurs="1" title="Time of Interest end date/time" abstract="Time of Interest end date/time in ISO 8601 (e.g. 2016-04-21T06:50:41Z)">2016-01-11T23:59:59.000Z</parameter>
         <parameter id="bbox" type="opensearch" target="geo:box" scope="runtime" maxOccurs="1" title="Area of Interest expressed as a bounding box" abstract="Area of Interest expressed as min longitude,min latitude,max longitude,max latitude (e.g. 14.75,37.41,15.21,37.74)">-6.93,36.64,-6.03,37.47</parameter>
       </defaultParameters>
-      <defaultJobconf>
+      <!--<defaultJobconf>
         <property id="ciop.job.max.tasks">1</property>
-      </defaultJobconf>
+      </defaultJobconf>-->
+    <defaultJobconf/>
     </jobTemplate>
     <jobTemplate id="sen2cor">
       <streamingExecutable>/application/sen2cor/run</streamingExecutable>
@@ -33,7 +34,7 @@
         </parameter>
       </defaultParameters>
       <defaultJobconf>
-        <property id="ciop.job.max.tasks">1</property>
+        <!--<property id="ciop.job.max.tasks">1</property>-->
         <property id="mapred.task.timeout">9900000000</property>
       </defaultJobconf>
     </jobTemplate>

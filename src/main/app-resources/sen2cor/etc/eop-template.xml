@@ -8,6 +8,7 @@
   </phenomenonTime>  
   <metaDataProperty xmlns="http://www.opengis.net/eop/2.1">
     <EarthObservationMetaData>
+      <identifier/>
       <productType/>
 <processing>
         <ProcessingInformation>

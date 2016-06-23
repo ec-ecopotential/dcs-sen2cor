@@ -152,8 +152,14 @@ function main() {
       # update metadata
       cp /application/sen2cor/etc/eop-template.xml ${result}.xml
       target_xml=${result}.xml
-         
-       # set product type
+        
+      # set identifier
+      metadata \
+        "//A:EarthObservation/D:metaDataProperty/D:EarthObservationMetaData/D:identifier" \
+        "$( basename "${result}" )" \
+        ${target_xml} 
+ 
+      # set product type
       metadata \
         "//A:EarthObservation/D:metaDataProperty/D:EarthObservationMetaData/D:productType" \
         "S2A_L2A_PROTO" \
