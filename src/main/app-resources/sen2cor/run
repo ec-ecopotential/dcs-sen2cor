@@ -41,7 +41,7 @@ trap cleanExit EXIT
 
 function setGDALEnv() {
   # setup GDAL environment
-  export GDAL_HOME=/opt/anaconda/pkgs/gdal-2.1.0-py27_0
+  export GDAL_HOME=/opt/anaconda/pkgs/gdal-2.1.0-py27_5
   export PATH=$GDAL_HOME/bin/:$PATH
   export LD_LIBRARY_PATH=$GDAL_HOME/lib/:/opt/anaconda/pkgs/geos-3.4.2-0/lib:/opt/anaconda/lib:$LD_LIBRARY_PATH
   export GDAL_DATA=$GDAL_HOME/share/gdal
@@ -57,10 +57,12 @@ function sen2cor_env() {
   mkdir -p $TMPDIR/sen2cor/cfg
   cp $SEN2COR_BIN/cfg/L2A_GIPP.xml $SEN2COR_HOME/cfg
 
+  cp $SEN2COR_BIN/cfg/L2A_GIPP.xml $SEN2COR_HOME/cfg/
+  cp $SEN2COR_BIN/cfg/L2A_CAL_AC_GIPP.xml $SEN2COR_HOME/cfg/
+  cp $SEN2COR_BIN/cfg/L2A_CAL_SC_GIPP.xml $SEN2COR_HOME/cfg/
 }
 
 function process_2A() {
-
   local ref=$1
   local granules=$2
   local resolution=$3
@@ -71,7 +73,13 @@ function process_2A() {
   
   [ -z ${online_resource} ] && return ${ERR_NO_RESOLUTION} 
 
-  local_s2="$( echo "${online_resource}" | ciop-copy -O ${TMPDIR} - )"
+#  local_s2="$( echo "${online_resource}" | ciop-copy -O ${TMPDIR} - )"
+
+  identifier="S2A_OPER_PRD_MSIL1C_PDMC_20151216T185827_R092_V20151216T081004_20151216T081004"
+
+  cp -r ~/S2A_OPER_PRD_MSIL1C_PDMC_20151216T185827_R092_V20151216T081004_20151216T081004 ${TMPDIR}/
+
+  local_s2=${TMPDIR}/S2A_OPER_PRD_MSIL1C_PDMC_20151216T185827_R092_V20151216T081004_20151216T081004
 
   [ ! -d ${local_s2} ] && return ${ERR_DOWNLOAD_1C}
 
@@ -88,7 +96,9 @@ function process_2A() {
   done
 
   ciop-log "INFO" "Invoke SEN2COR L2A_Process"
-  L2A_Process --resolution ${resolution} ${identifier}.SAFE 1>&2 # || return ${ERR_SEN2COR}
+  L2A_Process --resolution ${resolution} ${identifier}.SAFE 
+
+  #1>&2 # || return ${ERR_SEN2COR}
 
   [ "${format}" == "GeoTiff" ] && level_2a="$( echo ${identifier} | sed 's/OPER/USER/' | sed 's/MSIL1C/MSIL2A/' )" || level_2a="${identifier}"
 
@@ -99,16 +109,22 @@ function process_2A() {
     cd ${level_2a}.SAFE
 
     metadata="$( find . -maxdepth 1 -name "S2A*.xml" )"
-    counter=0
+#    counter=0
+    ciop-log "INFO" "gdalinfo $(gdalinfo ${metadata})"
     gdalinfo ${metadata} 2> /dev/null | grep -E  "SUBDATASET_._NAME" \
       | grep -v "PREVIEW" | cut -d "=" -f 2 | while read subset
     do 
       ciop-log "INFO" "Process ${subset}"
+
+      counter=$( echo $subset | cut -d : -f3 )
+
       gdal_translate \
         ${subset} \
-        ${TMPDIR}/${level_2a}_${counter}.TIF 1>&2 || return ${ERR_GDAL_TRANSLATE}
+        ${TMPDIR}/${level_2a}_${counter}.TIF &>/dev/null || return ${ERR_GDAL_TRANSLATE}
 
       #gzip ${TMPDIR}/${level_2a}_${counter}.TIF 1>&2
+      
+      ciop-publish -m ${TMPDIR}/${level_2a}_${counter}.TIF
       echo ${TMPDIR}/${level_2a}_${counter}.TIF #.gz   
    done
 
@@ -144,11 +160,16 @@ function main() {
     granules="$( echo $input | cut -d "," -f 2- | tr "," "|")"
  
     ciop-log "INFO" "Processsing $( echo ${granules} | tr "|" "\n" | wc -l ) tiles of Sentinel-2 product ${identifier}"
-
+    set -x
     results="$( process_2A ${ref} ${granules} ${resolution} ${format} || return $? )"
+   
+    ciop-log "INFO" "Results ${results}"
 
     for result in ${results}
-    do 
+    do
+
+      ciop-log "INFO" "Result is ${result}"
+exit 0 
       # update metadata
       cp /application/sen2cor/etc/eop-template.xml ${result}.xml
       target_xml=${result}.xml

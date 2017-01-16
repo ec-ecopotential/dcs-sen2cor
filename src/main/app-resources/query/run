@@ -38,16 +38,19 @@ function product2tiles () {
   local tiles=""
   
   local ref=$1  
-
+ciop-log "INFO" "First query ${ref}"
   read identifier self startdate enddate < <( opensearch-client ${ref} identifier,self,startdate,enddate | tr "," " " )
 
   [ -z ${self} ] || [ -z ${startdate} ] || [ -z ${enddate} ] && return ${ERR_CAT_REF}
-
+ 
+  ciop-log "INFO" "Querying opensearch-client -p pt=S2MSI1CT -p bbox=${bbox} -p start=${startdate} -p stop=${enddate} -p q=*${tile}* https://data2.terradue.com/eop/sentinel2/dataset/search identifier"
+ 
   tiles="$( opensearch-client \
     -p "pt=S2MSI1CT" \
     -p "bbox=${bbox}" \
     -p "start=${startdate}" \
     -p "stop=${enddate}" \
+    -p "q=*${tile}*" \
     https://data2.terradue.com/eop/sentinel2/dataset/search identifier | tr "\n" ","  | rev | cut -c 2- | rev )"
 
   [ -z ${tiles} ] && return ${ERR_NO_TILES} 
@@ -61,6 +64,7 @@ function product2tiles () {
 function main () {
 
   bbox="$( ciop-getparam bbox)"
+  tile="$( ciop-getparam tile)"
   # report activity in log
   ciop-log "INFO" "Processing ${bbox}"
 
