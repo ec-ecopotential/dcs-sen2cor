@@ -44,11 +44,11 @@ function product2tiles () {
   [ -z ${self} ] || [ -z ${startdate} ] || [ -z ${enddate} ] && return ${ERR_CAT_REF}
 
   tiles="$( opensearch-client \
-    -p "pt=S2MSI1CT" \
+    -p "pt=S2MSI1C" \
     -p "bbox=${bbox}" \
     -p "start=${startdate}" \
     -p "stop=${enddate}" \
-    https://data2.terradue.com/eop/sentinel2/dataset/search identifier | tr "\n" ","  | rev | cut -c 2- | rev )"
+    https://catalog.terradue.com/sentinel2/search identifier | tr "\n" ","  | rev | cut -c 2- | rev )"
 
   [ -z ${tiles} ] && return ${ERR_NO_TILES} 
  
