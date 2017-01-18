@@ -41,7 +41,7 @@ trap cleanExit EXIT
 
 function setGDALEnv() {
   # setup GDAL environment
-  export GDAL_HOME=/opt/anaconda/pkgs/gdal-2.1.0-py27_0
+  export GDAL_HOME=$( find /opt/anaconda/pkgs/ -name "gdal-2.1.0-py27_?" ) 
   export PATH=$GDAL_HOME/bin/:$PATH
   export LD_LIBRARY_PATH=$GDAL_HOME/lib/:/opt/anaconda/pkgs/geos-3.4.2-0/lib:/opt/anaconda/lib:$LD_LIBRARY_PATH
   export GDAL_DATA=$GDAL_HOME/share/gdal
@@ -56,39 +56,51 @@ function sen2cor_env() {
 
   mkdir -p $TMPDIR/sen2cor/cfg
   cp $SEN2COR_BIN/cfg/L2A_GIPP.xml $SEN2COR_HOME/cfg
+  cp $SEN2COR_BIN/cfg/L2A_CAL_AC_GIPP.xml $SEN2COR_HOME/cfg/
+  cp $SEN2COR_BIN/cfg/L2A_CAL_SC_GIPP.xml $SEN2COR_HOME/cfg/
 
 }
 
 function process_2A() {
 
   local ref=$1
-  local granules=$2
-  local resolution=$3
-  local format=$4
+  local resolution=$2
+  local format=$3
+  local granules=$4 
   local online_resource=""
   
-  read identifier online_resource startdate enddate orbit_number wrslon < <( opensearch-client -m EOP ${ref} identifier,enclosure,startdate,enddate,orbitNumber,wrsLongitudeGrid  | tr "," " " )
   
-  [ -z ${online_resource} ] && return ${ERR_NO_RESOLUTION} 
+  [ "${ref}" != "-" ] && {
+ 
+    read identifier online_resource startdate enddate orbit_number wrslon < <( opensearch-client -m EOP ${ref} identifier,enclosure,startdate,enddate,orbitNumber,wrsLongitudeGrid  | tr "," " " )
+  
+    [ -z ${online_resource} ] && return ${ERR_NO_RESOLUTION} 
 
-  local_s2="$( echo "${online_resource}" | ciop-copy -O ${TMPDIR} - )"
+    local_s2="$( echo "${online_resource}" | ciop-copy -O ${TMPDIR} - )"
 
-  [ ! -d ${local_s2} ] && return ${ERR_DOWNLOAD_1C}
+    [ ! -d ${local_s2} ] && return ${ERR_DOWNLOAD_1C}
 
-  cd ${local_s2}
+    cd ${local_s2}
 
-  granule_path=${identifier}.SAFE/GRANULE
+    granule_path=${identifier}.SAFE/GRANULE
 
-  [ ! -d ${granule_path} ] && return ${ERR_GRANULE_DIR}
+    [ ! -d ${granule_path} ] && return ${ERR_GRANULE_DIR}
 
-  ls ${granule_path} | grep -Ev ${granules} | while read dead_granule
-  do
-    ciop-log "INFO" "Excluding granule ${dead_granule}"
-    rm -fr ${granule_path}/${dead_granule}
-  done
+    [ ! -z "${granules}" ] && { 
+      ls ${granule_path} | grep -Ev ${granules} | while read dead_granule
+      do
+        ciop-log "INFO" "Excluding granule ${dead_granule}"
+       rm -fr ${granule_path}/${dead_granule}
+      done
+    }
 
-  ciop-log "INFO" "Invoke SEN2COR L2A_Process"
-  L2A_Process --resolution ${resolution} ${identifier}.SAFE 1>&2 # || return ${ERR_SEN2COR}
+    ciop-log "INFO" "Invoke SEN2COR L2A_Process"
+    L2A_Process --resolution ${resolution} ${identifier}.SAFE 1>&2 # || return ${ERR_SEN2COR}
+
+  } || {
+    # TODO implement section for processing tiles (after 06/12/2016)
+    ciop-log "WARN" "Can't invoke SEN2COR L2A_Process for products after 06/12/2016"
+  }
 
   [ "${format}" == "GeoTiff" ] && level_2a="$( echo ${identifier} | sed 's/OPER/USER/' | sed 's/MSIL1C/MSIL2A/' )" || level_2a="${identifier}"
 
@@ -129,23 +141,24 @@ function main() {
   sen2cor_env
   setGDALEnv
 
-  # report activity in log
-  ciop-log "INFO" "Doing..."
-
   local resolution="$( ciop-getparam resolution)"
   local format="$( ciop-getparam format )"
   
   while read input 
   do
-    ref="$( echo $input | cut -d "," -f 1)"
+    ciop-lopg "DEBUG" "Processing ${input}"
+
+    ref="$( echo ${input} | cut -d "," -f 1)"
 
     read identifier online_resource startdate enddate orbit_number wrslon < <( opensearch-client -m EOP ${ref} identifier,enclosure,startdate,enddate,orbitNumber,wrsLongitudeGrid  | tr "," " " )   
 
     granules="$( echo $input | cut -d "," -f 2- | tr "," "|")"
+
+    [ "${ref}" == ${granules} ] && granules=""
  
     ciop-log "INFO" "Processsing $( echo ${granules} | tr "|" "\n" | wc -l ) tiles of Sentinel-2 product ${identifier}"
 
-    results="$( process_2A ${ref} ${granules} ${resolution} ${format} || return $? )"
+    results="$( process_2A ${ref} ${resolution} ${format} ${granules} || return $? )"
 
     for result in ${results}
     do 

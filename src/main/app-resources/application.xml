@@ -5,8 +5,8 @@
       <streamingExecutable>/application/query/run</streamingExecutable>
       <defaultParameters>           
         <parameter id="product_type" type="opensearch" target="eop:productType">S2MSI1C</parameter>
-        <parameter id="startdate" type="opensearch" target="time:start" scope="runtime" maxOccurs="1" title="Time of Interest start date/time" abstract="Time of Interest start date/time in ISO 8601 (e.g. 2016-04-21T06:50:41Z)">2016-01-01T00:00:00.000Z</parameter>
-        <parameter id="enddate" type="opensearch" target="time:end" scope="runtime" maxOccurs="1" title="Time of Interest end date/time" abstract="Time of Interest end date/time in ISO 8601 (e.g. 2016-04-21T06:50:41Z)">2016-01-11T23:59:59.000Z</parameter>
+        <parameter id="startdate" type="opensearch" target="time:start" scope="runtime" maxOccurs="1" title="Time of Interest start date/time" abstract="Time of Interest start date/time in ISO 8601 (e.g. 2016-04-21T06:50:41Z)">2016-04-21T00:00:00.000Z</parameter>
+        <parameter id="enddate" type="opensearch" target="time:end" scope="runtime" maxOccurs="1" title="Time of Interest end date/time" abstract="Time of Interest end date/time in ISO 8601 (e.g. 2016-04-21T06:50:41Z)">2016-04-30T23:59:59.000Z</parameter>
         <parameter id="bbox" type="opensearch" target="geo:box" scope="runtime" maxOccurs="1" title="Area of Interest expressed as a bounding box" abstract="Area of Interest expressed as min longitude,min latitude,max longitude,max latitude (e.g. 14.75,37.41,15.21,37.74)">-6.93,36.64,-6.03,37.47</parameter>
       </defaultParameters>
       <!--<defaultJobconf>
@@ -25,7 +25,7 @@
         <default>60</default>
     </options>
 </parameter>
- <parameter id="format" scope="runtime" maxOccurs="1" title="Sentinel-2 Level 2A output format (SAFE or GeoTiff)" abstract="entinel-2 Level 2A output format (SAFE or GeoTiff)">
+ <parameter id="format" scope="runtime" maxOccurs="1" title="Sentinel-2 Level 2A output format (SAFE or GeoTiff)" abstract="Sentinel-2 Level 2A output format (SAFE or GeoTiff)">
           <options>
             <option>SAFE</option>
 <option>GeoTiff</option>
@@ -44,7 +44,7 @@
     <node id="query">
       <job id="query"/>
       <sources>
-        <source id="series" refid="cas:series" scope="runtime" title="Catalogue URL" abstract="Catalogue URL" maxOccurs="1">https://data2.terradue.com/eop/cache/series/S2A/description</source>
+        <source id="series" refid="cas:series" scope="runtime" title="Catalogue URL" abstract="Catalogue URL" maxOccurs="1">https://catalog.terradue.com/sentinel2/description</source>
       </sources>
     </node>
     <node id="sen2cor">

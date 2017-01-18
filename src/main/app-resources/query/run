@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -x
+
 # source the ciop functions (e.g. ciop-log, ciop-getparam)
 source ${ciop_job_include}
 
@@ -37,24 +39,43 @@ function product2tiles () {
   local enddate=""
   local tiles=""
   
-  local ref=$1  
-
-  read identifier self startdate enddate < <( opensearch-client ${ref} identifier,self,startdate,enddate | tr "," " " )
-
-  [ -z ${self} ] || [ -z ${startdate} ] || [ -z ${enddate} ] && return ${ERR_CAT_REF}
-
-  tiles="$( opensearch-client \
-    -p "pt=S2MSI1CT" \
-    -p "bbox=${bbox}" \
-    -p "start=${startdate}" \
-    -p "stop=${enddate}" \
-    https://data2.terradue.com/eop/sentinel2/dataset/search identifier | tr "\n" ","  | rev | cut -c 2- | rev )"
-
-  [ -z ${tiles} ] && return ${ERR_NO_TILES} 
- 
-  ciop-log "INFO" "Identified $( echo ${tiles} | tr "," "\n" | wc -l ) tiles in ${identifier}"
+  local ref="$1"  
   
-  echo "${self},${tiles}" | ciop-publish -s || return ${ERR_PUBLISH_S}
+  read identifier self startdate enddate < <( opensearch-client "${ref}" identifier,self,startdate,enddate | tr "," " " )
+
+  [ -z ${identifier} ] || [ -z ${startdate} ] || [ -z ${enddate} ] && return ${ERR_CAT_REF}
+
+  # check if product is before 06/12/2016
+
+  [ "true" == "true" ] && {
+
+    # pre-06/12/2016
+    tiles="$( opensearch-client \
+      -p "pt=S2MSI1CT" \
+      -p "pi=${identifier}" \
+      -p "bbox=${bbox}" \
+      -p "start=${startdate}" \
+      -p "stop=${enddate}" \
+      https://catalog.terradue.com/sentinel2/search identifier | tr "\n" ","  | rev | cut -c 2- | rev )"
+
+    [ -z ${tiles} ] && {
+      # it's a single tile product before 06/12/2016 
+      ciop-log "INFO" "Got single tile product"
+      echo "${self}" | ciop-publish -s || return ${ERR_PUBLISH_S}
+
+    } || {
+
+      ciop-log "INFO" "Identified $( echo ${tiles} | tr "," "\n" | wc -l ) tiles in ${identifier}"
+
+      echo "${self},${tiles}" | ciop-publish -s || return ${ERR_PUBLISH_S}
+  
+    }
+  } || {
+    # after-06/12/2016
+    ciop-log "WARN" "Skipping product from after 06/12/2016"
+    #echo "${self}" | ciop-publish -s || return ${ERR_PUBLISH_S}  
+  }
+
 
 }
 
@@ -68,7 +89,7 @@ function main () {
   do
     ciop-log "INFO" "reference: ${ref}"
   
-    product2tiles ${ref} || return $?
+    product2tiles "${ref}" || return $?
   
   done
 
