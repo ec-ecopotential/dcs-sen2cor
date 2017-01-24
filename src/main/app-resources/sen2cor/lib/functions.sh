@@ -126,6 +126,7 @@ function process_2A() {
     do
       ciop-log "INFO" "Process ${subset}"
       gdal_translate \
+        -of PNG \
         ${subset} \
         ${TMPDIR}/${level_2a}_${counter}.png 1>&2 || return ${ERR_GDAL_TRANSLATE}
 
@@ -158,7 +159,7 @@ function main() {
 
     results="$( process_2A ${ref} ${resolution} ${format} ${granules} || return $? )"
 
-    for result in $( echo ${results} | grep -v png.xml )
+    for result in $( echo ${results} | tr " " "\n" | grep -v png )
     do
       # update metadata
       cp /application/sen2cor/etc/eop-template.xml ${result}.xml
@@ -232,6 +233,11 @@ function main() {
 
       ciop-publish -m ${result} || return ${ERR_PUBLISH}
       ciop-publish -m ${result}.xml || return ${ERR_PUBLISH}
+    done
+  
+    for result in $( echo ${results} | tr " " "\n" | grep png )
+    do
+      ciop-publish -m ${result} || return ${ERR_PUBLISH}
     done
 
     rm -fr S2*
