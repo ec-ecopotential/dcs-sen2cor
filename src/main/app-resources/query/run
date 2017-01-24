@@ -1,99 +1,11 @@
 #!/bin/bash
 
-set -x
-
 # source the ciop functions (e.g. ciop-log, ciop-getparam)
 source ${ciop_job_include}
 
-SUCCESS=0
-ERR_CAT_REF=2
-ERR_NO_TILES=4
-ERR_PUBLISH_S=6
-
-function cleanExit ()
-{
-  local retval=$?
-  local msg=""
-  case "${retval}" in
-    ${SUCCESS}) msg="Processing successfully concluded";;
-    ${ERR_CAT_REF}) msg="Failed to query Level 1C product";;
-    ${ERR_NO_TILES}) msg="Failed to discover tiles";;
-    ${ERR_PUBLISH_S}) msg="Failed to publish product reference and tile identifiers";;
-    *) msg="Unknown error";;
-  esac
-
-  # clean up working space
-  rm -fr ${TMPDIR}
-
-  [ "${retval}" != "0" ] && ciop-log "ERROR" "Error ${retval} - ${msg}, processing aborted" || ciop-log "INFO" "${msg}"
-  exit ${retval}
-}
+source /application/query/lib/functions.sh
 
 trap cleanExit EXIT
-
-function product2tiles () {
-
-  local identifier=""
-  local self=""
-  local startdate=""
-  local enddate=""
-  local tiles=""
-  
-  local ref="$1"  
-  
-  read identifier self startdate enddate < <( opensearch-client "${ref}" identifier,self,startdate,enddate | tr "," " " )
-
-  [ -z ${identifier} ] || [ -z ${startdate} ] || [ -z ${enddate} ] && return ${ERR_CAT_REF}
-
-  # check if product is before 06/12/2016
-
-  [ "true" == "true" ] && {
-
-    # pre-06/12/2016
-    tiles="$( opensearch-client \
-      -p "pt=S2MSI1CT" \
-      -p "pi=${identifier}" \
-      -p "bbox=${bbox}" \
-      -p "start=${startdate}" \
-      -p "stop=${enddate}" \
-      https://catalog.terradue.com/sentinel2/search identifier | tr "\n" ","  | rev | cut -c 2- | rev )"
-
-    [ -z ${tiles} ] && {
-      # it's a single tile product before 06/12/2016 
-      ciop-log "INFO" "Got single tile product"
-      echo "${self}" | ciop-publish -s || return ${ERR_PUBLISH_S}
-
-    } || {
-
-      ciop-log "INFO" "Identified $( echo ${tiles} | tr "," "\n" | wc -l ) tiles in ${identifier}"
-
-      echo "${self},${tiles}" | ciop-publish -s || return ${ERR_PUBLISH_S}
-  
-    }
-  } || {
-    # after-06/12/2016
-    ciop-log "WARN" "Skipping product from after 06/12/2016"
-    #echo "${self}" | ciop-publish -s || return ${ERR_PUBLISH_S}  
-  }
-
-
-}
-
-function main () {
-
-  bbox="$( ciop-getparam bbox)"
-  # report activity in log
-  ciop-log "INFO" "Processing ${bbox}"
-
-  while read ref
-  do
-    ciop-log "INFO" "reference: ${ref}"
-  
-    product2tiles "${ref}" || return $?
-  
-  done
-
-}
 
 cat | main || exit $?
 

@@ -44,7 +44,7 @@ miniconda is a free Python distribution that includes a minimal set of Python pa
 To install miniconda, run the simple step below on the Developer Cloud Sandbox shell:
 
 ```bash
-sudo yum install -y miniconda-3.8.3
+sudo yum install -y miniconda
 ```
 
 **Installing SEN2COR conda package and dependencies** 
