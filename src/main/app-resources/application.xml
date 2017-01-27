@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="us-ascii"?>
+<application xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" id="application">
+  <jobTemplates>
+    <jobTemplate id="query">
+      <streamingExecutable>/application/query/run</streamingExecutable>
+      <defaultParameters>           
+        <parameter id="product_type" type="opensearch" target="eop:productType">S2MSI1C</parameter>
+        <parameter id="startdate" type="opensearch" target="time:start" scope="runtime" maxOccurs="1" title="Time of Interest start date/time" abstract="Time of Interest start date/time in ISO 8601 (e.g. 2016-04-21T06:50:41Z)">2016-04-21T00:00:00.000Z</parameter>
+        <parameter id="enddate" type="opensearch" target="time:end" scope="runtime" maxOccurs="1" title="Time of Interest end date/time" abstract="Time of Interest end date/time in ISO 8601 (e.g. 2016-04-21T06:50:41Z)">2016-04-30T23:59:59.000Z</parameter>
+        <parameter id="bbox" type="opensearch" target="geo:box" scope="runtime" maxOccurs="1" title="Area of Interest expressed as a bounding box" abstract="Area of Interest expressed as min longitude,min latitude,max longitude,max latitude (e.g. 14.75,37.41,15.21,37.74)">-6.93,36.64,-6.03,37.47</parameter>
+      </defaultParameters>
+      <defaultJobconf>
+        <property id="ciop.job.max.tasks">1</property>
+      </defaultJobconf>
+    </jobTemplate>
+    <jobTemplate id="sen2cor">
+      <streamingExecutable>/application/sen2cor/run</streamingExecutable>
+      <defaultParameters>
+        <parameter id="resolution" scope="runtime" maxOccurs="1" title="Resolution for Sentinel-2 Level-2A product in meters (10, 20 or 60)" abstract="Resolution for Sentinel-2 Level-2A product in meters (10, 20 or 60). The bands are resampled to the selceted target resolution">
+ <options>
+        <option>10</option>
+        <option>20</option>
+        <option>60</option>
+        <default>60</default>
+    </options>
+</parameter>
+ <parameter id="format" scope="runtime" maxOccurs="1" title="Sentinel-2 Level 2A output format (SAFE or GeoTiff)" abstract="Sentinel-2 Level 2A output format (SAFE or GeoTiff)">
+          <options>
+            <option>SAFE</option>
+<!--<option>GeoTiff</option>-->
+            <default>SAFE</default>
+          </options>
+        </parameter>
+      </defaultParameters>
+      <defaultJobconf>
+        <property id="mapred.task.timeout">9900000000</property>
+      </defaultJobconf>
+    </jobTemplate>
+  </jobTemplates>
+    <workflow id="workflow" title="Sentinel-2 atmospheric correction using SEN2COR" abstract="This processing services applies the SEN2COR atmospheric correction to Sentinel-2 Level 1C tiles. The inputs are thus Sentinel-2 products containing Top of Atmosphere reflectances (TOA) and the outputs are Sentinel-2 products including the tiles covering the area of interest and containing Bottom of Atmosphere reflectances (BOA) and optionally terrain- and cirrus corrected reflectance images, Aerosol Optical Thickness-, Water Vapour-, Scene Classification maps and Quality Indicators, including cloud and snow probabilities.">
+    <workflowVersion>1.0</workflowVersion>
+    <node id="query">
+      <job id="query"/>
+      <sources>
+        <source id="series" refid="cas:series" scope="runtime" title="Catalogue URL" abstract="Catalogue URL" maxOccurs="1">https://catalog.terradue.com/sentinel2/description</source>
+      </sources>
+    </node>
+    <node id="sen2cor">
+      <job id="sen2cor"/>
+      <sources>
+        <source refid="wf:node">query</source>
+      </sources>
+    </node>
+  </workflow>
+</application>

@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# source the ciop functions (e.g. ciop-log, ciop-getparam)
+source ${ciop_job_include}
+
+source /application/sen2cor/lib/functions.sh
+
+trap cleanExit EXIT
+
+cat | main || exit $?
+
