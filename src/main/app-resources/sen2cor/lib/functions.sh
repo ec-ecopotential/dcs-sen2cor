@@ -66,6 +66,7 @@ function process_2A() {
   [ -z ${online_resource} ] && return ${ERR_NO_RESOLUTION}
 
   local_s2="$( echo "${online_resource}" | ciop-copy -O ${TMPDIR} - )"
+  
 
   [ ! -d ${local_s2} ] && return ${ERR_DOWNLOAD_1C}
 
@@ -158,6 +159,9 @@ function main() {
     ciop-log "INFO" "Processsing $( echo ${granules} | tr "|" "\n" | wc -l ) tiles of Sentinel-2 product ${identifier}"
 
     results="$( process_2A ${ref} ${resolution} ${format} ${granules} || return $? )"
+    res=$?
+
+    [ "${res}" != "0"  ] && return ${res}   
 
     for result in $( echo ${results} | tr " " "\n" | grep -v png )
     do
