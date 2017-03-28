@@ -1,4 +1,4 @@
-
+set -x
 # define the exit codes
 SUCCESS=0
 ERR_NO_RESOLUTION=5
@@ -32,7 +32,7 @@ function cleanExit ()
 
 function setGDALEnv() {
   # setup GDAL environment
-  export GDAL_HOME=$( find /opt/anaconda/pkgs/ -name "gdal-2.1.0-py27_?" )
+  export GDAL_HOME=$( find /opt/anaconda/pkgs/ -name "gdal-2.1.3-py27_?" )
   export PATH=$GDAL_HOME/bin/:$PATH
   export LD_LIBRARY_PATH=$GDAL_HOME/lib/:/opt/anaconda/pkgs/geos-3.4.2-0/lib:/opt/anaconda/lib:$LD_LIBRARY_PATH
   export GDAL_DATA=$GDAL_HOME/share/gdal
