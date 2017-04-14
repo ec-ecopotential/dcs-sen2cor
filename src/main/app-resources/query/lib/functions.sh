@@ -64,13 +64,40 @@ function product2tiles () {
     }
 }
 
+function pa2bbox() {
+
+  local pa="$1"
+
+  bbox="$( cat ${_CIOP_APPLICATION_PATH}/etc/pa.bbox | grep "${pa}" | cut -d "," -f 2- )"
+
+  [ -z "${bbox}" ] && return ${ERR_NO_BBOX}
+
+  echo "${bbox}"
+
+}
+
+
 function main () {
 
-  bbox="$( ciop-getparam bbox)"
-  # report activity in log
-  ciop-log "INFO" "Processing ${bbox}"
+  local catalogue_url="$( cat )"
+  local startdate="$( ciop-getparam startdate )"
+  local enddate="$( ciop-getparam enddate )"
+  local pa="$( ciop-getparam pa )" 
 
-  while read ref
+  local bbox
+
+  # TODO check error han
+  bbox="$( pa2bbox "${pa}" || return $? )"
+
+  # report activity in log
+  ciop-log "INFO" "Processing ${pa}"
+
+  opensearch-client \
+    -p "pt=S2MSI1C" \
+    -p "bbox=${bbox}" \
+    -p "start=${startdate}" \
+    -p "stop=${enddate}" \
+    ${catalogue_url} | while read ref
   do
     ciop-log "INFO" "reference: ${ref}"
 

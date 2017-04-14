@@ -52,12 +52,63 @@ function sen2cor_env() {
 
 }
 
+function convert() {
+
+  local l1c=$1
+  local l2a=$2
+  local format=$3
+  local proj_win=$4
+
+  # get source proj for all three possible resolutions
+  source_res10m=$( find ${l1c} -name "*B02.jp2" )
+  source_res20m=$( find ${l1c} -name "*B05.jp2" )
+  source_res60m=$( find ${l1c} -name "*B01.jp2" )
+
+  for res in 10 20 60
+  do
+    tmp_res=source_res${res}m
+    source_res=${!tmp_res}
+    for band in $( find ${l2a} -name "*${res}m.jp2" )
+    do
+      tif_name=$( echo ${band} | sed 's/jp2/tif/' )
+      ${_CIOP_APPLICATION_PATH}/sen2cor/bin/gdalcopyproj.py \
+      ${source_res} \
+      ${band}
+  
+     # TODO add compression -co COMPRESS=LZW
+      gdal_translate -of GTiff -projwin $( echo ${proj_win} | tr "," " " ) ${band} ${TMPDIR}/${tif_name} 
+     
+      echo ${TMPDIR}/${tif_name}
+
+    done
+  done
+
+}
+
+function preview() {
+
+  local l2a=$1
+
+  for band in $( find ${l2a} -name "*$m.jp2" )
+  do
+    preview_name=$( echo ${band} | sed 's/jp2/png/' )
+    gdal_translate \
+      -of PNG \
+      ${band} \
+      ${TMPDIR}/${preview_name} 1>&2 || return ${ERR_GDAL_TRANSLATE}
+
+    echo ${TMPDIR}/${preview_name} 
+
+  done
+}
+
 function process_2A() {
 
   local ref=$1
   local resolution=$2
   local format=$3
-  local granules=$4
+  local proj_win=$4
+  local granules=$5
   local online_resource=""
 
 
@@ -93,20 +144,22 @@ function process_2A() {
 
   [ "${format}" == "GeoTiff" ] && {
 
-    cd ${level_2a}.SAFE
+    convert ${local_s2}/${identifier}.SAFE ${level_2a}.SAFE ${format} ${proj_win}
 
-    metadata="$( find . -maxdepth 1 -name "*MTD*.xml" )"
-    counter=0
-    gdalinfo ${metadata} 2> /dev/null | grep -E  "SUBDATASET_._NAME" \
-     | grep -v "PREVIEW" |  cut -d "=" -f 2 | while read subset
-    do
-      ciop-log "INFO" "Process ${subset}"
-      gdal_translate \
-        ${subset} \
-        ${TMPDIR}/${level_2a}_${counter}.TIF 1>&2 || return ${ERR_GDAL_TRANSLATE}
-
-      echo ${TMPDIR}/${level_2a}_${counter}.TIF #.gz
-   done
+  #  cd ${level_2a}.SAFE
+ 
+  #  metadata="$( find . -maxdepth 1 -name "*MTD*.xml" )"
+  #  counter=0
+  #  gdalinfo ${metadata} 2> /dev/null | grep -E  "SUBDATASET_._NAME" \
+  #   | grep -v "PREVIEW" |  cut -d "=" -f 2 | while read subset
+  #  do
+  #    ciop-log "INFO" "Process ${subset}"
+  #    gdal_translate \
+  #      ${subset} \
+  #      ${TMPDIR}/${level_2a}_${counter}.TIF 1>&2 || return ${ERR_GDAL_TRANSLATE}
+  #
+  #    echo ${TMPDIR}/${level_2a}_${counter}.TIF #.gz
+  # done
 
   } || {
 
@@ -117,22 +170,24 @@ function process_2A() {
 
   }
 
+  preview ${local_s2}/${identifier}.SAFE 
+ 
   # Preview
-  cd ${level_2a}.SAFE
+  #cd ${level_2a}.SAFE
 
-    metadata="$( find . -maxdepth 1 -name "*MTD*.xml" )"
-    counter=0
-    gdalinfo ${metadata} 2> /dev/null | grep -E  "SUBDATASET_._NAME" \
-     | grep "PREVIEW" |  cut -d "=" -f 2 | while read subset
-    do
-      ciop-log "INFO" "Process ${subset}"
-      gdal_translate \
-        -of PNG \
-        ${subset} \
-        ${TMPDIR}/${level_2a}_${counter}.png 1>&2 || return ${ERR_GDAL_TRANSLATE}
-
-      echo ${TMPDIR}/${level_2a}_${counter}.png
-   done
+  #  metadata="$( find . -maxdepth 1 -name "*MTD*.xml" )"
+  #  counter=0
+  #  gdalinfo ${metadata} 2> /dev/null | grep -E  "SUBDATASET_._NAME" \
+  #   | grep "PREVIEW" |  cut -d "=" -f 2 | while read subset
+  #  do
+  #    ciop-log "INFO" "Process ${subset}"
+  #    gdal_translate \
+  #      -of PNG \
+  #      ${subset} \
+  #      ${TMPDIR}/${level_2a}_${counter}.png 1>&2 || return ${ERR_GDAL_TRANSLATE}
+  #
+  #    echo ${TMPDIR}/${level_2a}_${counter}.png
+  # done
 
 }
 
@@ -143,6 +198,11 @@ function main() {
 
   local resolution="$( ciop-getparam resolution)"
   local format="$( ciop-getparam format )"
+  local pa="$( ciop-getparam pa )"
+
+  local proj_win="( get_projwin )"
+
+  [ -z "${proj_win}" ] && return ${ERR_PROJWIN}
 
   while read input
   do
@@ -158,7 +218,7 @@ function main() {
 
     ciop-log "INFO" "Processsing $( echo ${granules} | tr "|" "\n" | wc -l ) tiles of Sentinel-2 product ${identifier}"
 
-    results="$( process_2A ${ref} ${resolution} ${format} ${granules} || return $? )"
+    results="$( process_2A ${ref} ${resolution} ${format} "${proj_win}" ${granules} || return $? )"
     res=$?
 
     [ "${res}" != "0"  ] && return ${res}   
