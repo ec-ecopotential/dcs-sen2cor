@@ -1,4 +1,6 @@
 
+set -x
+
 SUCCESS=0
 ERR_CAT_REF=2
 ERR_NO_TILES=4

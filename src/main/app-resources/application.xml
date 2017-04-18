@@ -56,7 +56,7 @@
     <node id="query">
       <job id="query"/>
       <sources>
-        <source id="series" refid="str:list" scope="runtime" title="Catalogue URL" abstract="Catalogue URL" maxOccurs="1">https://catalog.terradue.com/sentinel2/description</source>
+        <source id="series" refid="string:list" scope="runtime" title="Catalogue URL" abstract="Catalogue URL" maxOccurs="1">https://catalog.terradue.com/sentinel2/description</source>
       </sources>
     </node>
     <node id="sen2cor">

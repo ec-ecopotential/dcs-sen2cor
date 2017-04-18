@@ -76,9 +76,13 @@ function convert() {
       ${band}
   
      # TODO add compression -co COMPRESS=LZW
-      gdal_translate -of GTiff -projwin $( echo ${proj_win} | tr "," " " ) ${band} ${TMPDIR}/${tif_name} 
-     
-      echo ${TMPDIR}/${tif_name}
+      #gdal_translate -of GTiff -epo -projwin $( echo ${proj_win} | tr "," " " ) ${band} ${TMPDIR}/${tif_name} 
+      gdal_translate \
+        -of GTiff \
+        ${band} \
+        ${tif_name} 1>&2    
+
+      echo ${tif_name}
 
     done
   done
@@ -95,9 +99,9 @@ function preview() {
     gdal_translate \
       -of PNG \
       ${band} \
-      ${TMPDIR}/${preview_name} 1>&2 || return ${ERR_GDAL_TRANSLATE}
+      ${preview_name} 1>&2 || return ${ERR_GDAL_TRANSLATE}
 
-    echo ${TMPDIR}/${preview_name} 
+    echo ${preview_name} 
 
   done
 }
@@ -144,7 +148,7 @@ function process_2A() {
 
   [ "${format}" == "GeoTiff" ] && {
 
-    convert ${local_s2}/${identifier}.SAFE ${level_2a}.SAFE ${format} ${proj_win}
+    convert ${local_s2}/${identifier}.SAFE ${local_s2}/${level_2a}.SAFE ${format} ${proj_win}
 
   #  cd ${level_2a}.SAFE
  
@@ -170,7 +174,7 @@ function process_2A() {
 
   }
 
-  preview ${local_s2}/${identifier}.SAFE 
+#  preview ${local_s2}/${level_2a}.SAFE 
  
   # Preview
   #cd ${level_2a}.SAFE
@@ -191,6 +195,20 @@ function process_2A() {
 
 }
 
+function get_projwin() {
+
+  local pa="$1"
+  local win
+
+  win="$( cat ${_CIOP_APPLICATION_PATH}/etc/pa.projwin | grep "${pa}" | cut -d "," -f 2- )"
+
+  [ -z "${win}" ] && return ${ERR_PROJWIN}
+
+  echo "${win}"
+
+}
+
+
 function main() {
 
   sen2cor_env
@@ -200,7 +218,11 @@ function main() {
   local format="$( ciop-getparam format )"
   local pa="$( ciop-getparam pa )"
 
-  local proj_win="( get_projwin )"
+  local short_pa=CM
+
+  local proj_win
+
+  proj_win="$( get_projwin ${pa} )"
 
   [ -z "${proj_win}" ] && return ${ERR_PROJWIN}
 
@@ -225,6 +247,20 @@ function main() {
 
     for result in $( echo ${results} | tr " " "\n" | grep -v png )
     do
+      mission=$( echo ${identifier} | cut -c 1-3 )
+      tile=$( basename ${result} | cut -d "_" -f 2 )
+      acq_time=$( basename ${result} | cut -d "_" -f 3 )
+      creaf_tail=$( basename ${result} | cut -d "_" -f 3- )
+      creaf_name=$(dirname ${result} )/${mission}_MSIL2A_${tile}_${short_pa}_${creaf_tail}
+ 
+      creaf_dir=${TMPDIR}/${mission}_MSIL2A_${tile}_${short_pa}_${acq_time}
+      ciop-log "DEBUG" "creaf dir ${creaf_dir}"
+      mkdir -p ${creaf_dir}
+
+      ciop-log "DEBUG" "creaf name: ${creaf_name}"
+      mv ${result} ${creaf_dir}/${creaf_name}
+      result=${creaf_dir}/${creaf_name}
+
       # update metadata
       cp /application/sen2cor/etc/eop-template.xml ${result}.xml
       target_xml=${result}.xml
@@ -299,11 +335,11 @@ function main() {
       ciop-publish -m ${result}.xml || return ${ERR_PUBLISH}
     done
   
-    for result in $( echo ${results} | tr " " "\n" | grep png )
-    do
-      ciop-publish -m ${result} || return ${ERR_PUBLISH}
-    done
-
+ #   for result in $( echo ${results} | tr " " "\n" | grep png )
+#    do
+#      ciop-publish -m ${result} || return ${ERR_PUBLISH}
+#    done
+    rm -fr ${creaf_dir}
     rm -fr S2*
   done
 
