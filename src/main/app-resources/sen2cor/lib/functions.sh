@@ -50,6 +50,7 @@ function sen2cor_env() {
   cp $SEN2COR_BIN/cfg/L2A_CAL_AC_GIPP.xml $SEN2COR_HOME/cfg/
   cp $SEN2COR_BIN/cfg/L2A_CAL_SC_GIPP.xml $SEN2COR_HOME/cfg/
 
+  export SEN2COR_CONF=$SEN2COR_HOME/cfg/L2A_GIPP.xml
 }
 
 function convert() {
@@ -106,13 +107,57 @@ function preview() {
   done
 }
 
+function prep_conf() {
+
+
+
+  xmlstarlet \
+    ed -L \
+    -u "//Level-2A_Ground_Image_Processing_Parameter/Atmospheric_Correction/Look_Up_Tables/Aerosol_Type" \
+    -v "${aerosol_type}" \
+    ${SEN2COR_CONF}
+ 
+  xmlstarlet \
+    ed -L \
+    -u "//Level-2A_Ground_Image_Processing_Parameter/Atmospheric_Correction/Look_Up_Tables/Mid_Latitude" \
+    -v "${mid_latitude}" \
+    ${SEN2COR_CONF}
+
+  xmlstarlet \
+    ed -L \
+    -u "//Level-2A_Ground_Image_Processing_Parameter/Atmospheric_Correction/Look_Up_Tables/ozone_content" \
+    -v "${ozone_content}" \
+    ${SEN2COR_CONF}
+
+  xmlstarlet \
+    ed -L \
+    -u "//Level-2A_Ground_Image_Processing_Parameter/Atmospheric_Correction/Look_Up_Tables/WV_Correction" \
+    -v "${wv_correction}" \
+    ${SEN2COR_CONF}
+
+  xmlstarlet \
+    ed -L \
+    -u "//Level-2A_Ground_Image_Processing_Parameter/Atmospheric_Correction/Look_Up_Tables/VIS_Update_Mode" \
+    -v "${vis_update_mode}" \
+    ${SEN2COR_CONF}
+
+
+WV_Watermask
+Cirrus_Correction
+BRDF_Correction
+BRDF_Lower_Bound
+}
+
+
+
 function process_2A() {
 
   local ref=$1
   local resolution=$2
   local format=$3
   local proj_win=$4
-  local granules=$5
+  local dem=$5
+  local granules=$6
   local online_resource=""
 
 
@@ -126,6 +171,20 @@ function process_2A() {
   [ ! -d ${local_s2} ] && return ${ERR_DOWNLOAD_1C}
 
   cd ${local_s2}
+
+  # check if dem is needed
+  [ "${dem}" == "TRUE" ] && {
+    ciop-log "INFO" "A DEM will be used"  
+    # set dem path in ${SEN2COR_CONF}
+    SEN2COR_DEM=${local_s2}/DEM
+    mkdir -p ${SEN2COR_DEM}
+    
+    # xmlstartlet
+     xmlstarlet ed -L -u \
+       "//Level-2A_Ground_Image_Processing_Parameter/Common_Section/DEM_Directory" \
+       -v "${SEN2COR_DEM}" \
+       ${SEN2COR_CONF} 
+  }
 
   granule_path=${identifier}.SAFE/GRANULE
 
@@ -217,6 +276,9 @@ function main() {
   local resolution="$( ciop-getparam resolution)"
   local format="$( ciop-getparam format )"
   local pa="$( ciop-getparam pa )"
+  local dem
+  
+  [ "$( ciop-getparam dem )" == "Yes" ] && dem="TRUE" || dem="FALSE"
 
   local short_pa=CM
 
@@ -240,7 +302,7 @@ function main() {
 
     ciop-log "INFO" "Processsing $( echo ${granules} | tr "|" "\n" | wc -l ) tiles of Sentinel-2 product ${identifier}"
 
-    results="$( process_2A ${ref} ${resolution} ${format} "${proj_win}" ${granules} || return $? )"
+    results="$( process_2A ${ref} ${resolution} ${format} "${proj_win}" ${dem} ${granules} || return $? )"
     res=$?
 
     [ "${res}" != "0"  ] && return ${res}   
@@ -251,11 +313,13 @@ function main() {
       tile=$( basename ${result} | cut -d "_" -f 2 )
       acq_time=$( basename ${result} | cut -d "_" -f 3 )
       creaf_tail=$( basename ${result} | cut -d "_" -f 3- )
-      creaf_name=$(dirname ${result} )/${mission}_MSIL2A_${tile}_${short_pa}_${creaf_tail}
- 
+      creaf_name=${mission}_MSIL2A_${tile}_${short_pa}_${creaf_tail}
+
       creaf_dir=${TMPDIR}/${mission}_MSIL2A_${tile}_${short_pa}_${acq_time}
       ciop-log "DEBUG" "creaf dir ${creaf_dir}"
       mkdir -p ${creaf_dir}
+
+      echo ${creaf_dir} >> ${TMPDIR}/results
 
       ciop-log "DEBUG" "creaf name: ${creaf_name}"
       mv ${result} ${creaf_dir}/${creaf_name}
@@ -331,16 +395,34 @@ function main() {
         "${orbit_number}" \
         ${target_xml}
 
-      ciop-publish -m ${result} || return ${ERR_PUBLISH}
-      ciop-publish -m ${result}.xml || return ${ERR_PUBLISH}
+      #ciop-publish -m ${result} || return ${ERR_PUBLISH}
+      #ciop-publish -m ${result}.xml || return ${ERR_PUBLISH} 
+   done
+ 
+    # compress and publish
+    cd ${TMPDIR}
+    for res_dir in $( cat ${TMPDIR}/results )
+    do
+      # copy sen2cor configuration
+      cp ${SEN2COR_CONF} ${res_dir}/$( basename ${res_dir} )_L2A_GIPP.xml
+
+      ciop-log "INFO" "Compress ${res_dir}"
+      tar cvfz ${res_dir}.tgz ${res_dir}
+      ciop-log "INFO" "Publish ${res_dir}.tgz"
+      ciop-publish -m ${res_dir}.tgz || return ${ERR_PUBLISH}
+      
+      rm -fr ${res_dir} ${res_dir}.tgz
     done
-  
+
+
  #   for result in $( echo ${results} | tr " " "\n" | grep png )
 #    do
 #      ciop-publish -m ${result} || return ${ERR_PUBLISH}
 #    done
-    rm -fr ${creaf_dir}
-    rm -fr S2*
+    #rm -fr ${creaf_dir}
+    #rm -fr S2*
+    tree ${TMPDIR}   
+
   done
 
 }

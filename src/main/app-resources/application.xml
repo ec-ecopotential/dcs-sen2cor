@@ -45,6 +45,13 @@
             <default>Camargue</default>
           </options>
 </parameter>
+        <parameter id="dem" scope="runtime" maxOccurs="1" title="Use SRTM DEM" abstract="Use SRTM DEM">
+          <options>
+            <option>No</option>
+            <option>Yes</option>
+            <default>Yes</default>
+          </options>
+        </parameter>
       </defaultParameters>
       <defaultJobconf>
         <property id="mapred.task.timeout">9900000000</property>
