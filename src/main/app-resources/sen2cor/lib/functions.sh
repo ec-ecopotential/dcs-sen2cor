@@ -109,7 +109,21 @@ function preview() {
 
 function prep_conf() {
 
-  
+  local aerosol_type="$( ciop-getparam aerosol_type )"
+  local mid_latitude="$( ciop-getparam mid_latitude )"
+  local ozone_content="$( ciop-getparam ozone_content )"
+  local wv_correction="$( ciop-getparam wv_correction )"
+  local vis_update_mode="$( ciop-getparam vis_update_mode )"
+  local wv_watermask="$( ciop-getparam wv_watermask )"
+  local cirrus_correction="$( ciop-getparam cirrus_correction )"
+  local brdf_correction="$( ciop-getparam brdf_correction )"
+  local brdf_lower_bound="$( ciop-getparam brdf_lower_bound )"
+  local dem_unit="$( ciop-getparam dem_unit )"
+  local adj_km="$( ciop-getparam adj_km )"
+  local visibility="$( ciop-getparam visibility )"
+  local altitude="$( ciop-getparam altitude )"
+  local smooth_wv_map="$( ciop-getparam smooth_wv_map )"
+  local wv_threshold_cirrus="$( ciop-getparam wv_threshold_cirrus )"
 
   xmlstarlet \
     ed -L \
@@ -125,30 +139,84 @@ function prep_conf() {
 
   xmlstarlet \
     ed -L \
-    -u "//Level-2A_Ground_Image_Processing_Parameter/Atmospheric_Correction/Look_Up_Tables/ozone_content" \
+    -u "//Level-2A_Ground_Image_Processing_Parameter/Atmospheric_Correction/Look_Up_Tables/Ozone_Content" \
     -v "${ozone_content}" \
     ${SEN2COR_CONF}
 
   xmlstarlet \
     ed -L \
-    -u "//Level-2A_Ground_Image_Processing_Parameter/Atmospheric_Correction/Look_Up_Tables/WV_Correction" \
+    -u "//Level-2A_Ground_Image_Processing_Parameter/Atmospheric_Correction/Flags/WV_Correction" \
     -v "${wv_correction}" \
     ${SEN2COR_CONF}
 
   xmlstarlet \
     ed -L \
-    -u "//Level-2A_Ground_Image_Processing_Parameter/Atmospheric_Correction/Look_Up_Tables/VIS_Update_Mode" \
+    -u "//Level-2A_Ground_Image_Processing_Parameter/Atmospheric_Correction/Flags/VIS_Update_Mode" \
     -v "${vis_update_mode}" \
     ${SEN2COR_CONF}
 
+  xmlstarlet \
+    ed -L \
+    -u "//Level-2A_Ground_Image_Processing_Parameter/Atmospheric_Correction/Flags/WV_Watermask" \
+    -v "${wv_watermask}" \
+    ${SEN2COR_CONF}
+    
+  xmlstarlet \
+    ed -L \
+    -u "//Level-2A_Ground_Image_Processing_Parameter/Atmospheric_Correction/Flags/Cirrus_Correction" \
+    -v "${cirrus_correction}" \
+    ${SEN2COR_CONF}
+    
+    
+  xmlstarlet \
+    ed -L \
+    -u "//Level-2A_Ground_Image_Processing_Parameter/Atmospheric_Correction/Flags/BRDF_Correction" \
+    -v "${brdf_correction}" \
+    ${SEN2COR_CONF}
+    
+  xmlstarlet \
+    ed -L \
+    -u "//Level-2A_Ground_Image_Processing_Parameter/Atmospheric_Correction/Flags/BRDF_Lower_Bound" \
+    -v "${brdf_lower_bound}" \
+    ${SEN2COR_CONF}
+    
+  xmlstarlet \
+    ed -L \
+    -u "//Level-2A_Ground_Image_Processing_Parameter/Atmospheric_Correction/Calibration/DEM_Unit" \
+    -v "${dem_unit}" \
+    ${SEN2COR_CONF}
+    
+  xmlstarlet \
+    ed -L \
+    -u "//Level-2A_Ground_Image_Processing_Parameter/Atmospheric_Correction/Calibration/Adj_Km" \
+    -v "${adj_km}" \
+    ${SEN2COR_CONF}
+    
+  xmlstarlet \
+    ed -L \
+    -u "//Level-2A_Ground_Image_Processing_Parameter/Atmospheric_Correction/Calibration/Visibility" \
+    -v "${visibility}" \
+    ${SEN2COR_CONF}
+    
+  xmlstarlet \
+    ed -L \
+    -u "//Level-2A_Ground_Image_Processing_Parameter/Atmospheric_Correction/Calibration/Altitude" \
+    -v "${alltitude}" \
+    ${SEN2COR_CONF}
+    
+  xmlstarlet \
+    ed -L \
+    -u "//Level-2A_Ground_Image_Processing_Parameter/Atmospheric_Correction/Calibration/Smooth_WV_Map" \
+    -v "${smooth_wv_map}" \
+    ${SEN2COR_CONF}
+    
+  xmlstarlet \
+    ed -L \
+    -u "//Level-2A_Ground_Image_Processing_Parameter/Atmospheric_Correction/Calibration/WV_Threshold_Cirrus" \
+    -v "${wv_threshold_cirrus}" \
+    ${SEN2COR_CONF}
 
-#WV_Watermask
-#Cirrus_Correction
-#BRDF_Correction
-#BRDF_Lower_Bound
 }
-
-
 
 function process_2A() {
 
