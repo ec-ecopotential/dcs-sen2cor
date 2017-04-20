@@ -146,7 +146,7 @@ equation) but with exponent b=1.0 (lambda less than 720 nm), and b=3/4 (lambda g
           <parameter id="visibility" scope="runtime" maxOccurs="1" title="Visibility" abstract="visibility (between 5 and 120 km)">40.0</parameter>
           <parameter id="altitude" scope="runtime" maxOccurs="1" title="Altitude" abstract="[km] Assumed altitude if no DEM is present [km]. Default = 0.10, equals 100 m">0.100</parameter>
           <parameter id="smooth_wv_map" scope="runtime" maxOccurs="1" title="Smooth_WV_Map" abstract="- length of square box, [meters], Default =100 m -">100.0</parameter>
-          <parameter id="<wv_threshold_cirrus" scope="runtime" maxOccurs="1" title="WV Threshold Cirrus" abstract="- water vapor threshold to switch off cirrus algorithm [cm]Range: 0.1-1.0 default = 0.25">0.25</parameter>
+          <parameter id="wv_threshold_cirrus" scope="runtime" maxOccurs="1" title="WV Threshold Cirrus" abstract="- water vapor threshold to switch off cirrus algorithm [cm]Range: 0.1-1.0 default = 0.25">0.25</parameter>
           
       </defaultParameters>
       <defaultJobconf>
