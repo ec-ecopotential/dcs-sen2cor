@@ -70,7 +70,7 @@ function pa2bbox() {
 
   local pa="$1"
 
-  bbox="$( cat ${_CIOP_APPLICATION_PATH}/etc/pa.bbox | grep "${pa}" | cut -d "," -f 2- )"
+  bbox="$( cat ${_CIOP_APPLICATION_PATH}/etc/pa.bbox | grep "${pa}" | cut -d "," -f 3- )"
 
   [ -z "${bbox}" ] && return ${ERR_NO_BBOX}
 
