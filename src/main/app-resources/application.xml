@@ -110,7 +110,7 @@ average of water vapour of land pixels is assigned to water pixels (line-average
             <default>1</default>
           </options>
         </parameter>
-        <parameter id="brdf_correction>" scope="runtime" maxOccurs="1" title="BRDF Correction>" abstract="0: no BRDF correction,
+        <parameter id="brdf_correction" scope="runtime" maxOccurs="1" title="BRDF Correction" abstract="0: no BRDF correction,
 1: correction with cosine of local solar zenith angle (BRDF equation with b=1)
 2: correction with sqrt(cos) of local solar zenith angle (BRDF equation with b=0.5)
 11: correction with cosine of local solar zenith angle (BRDF equation with b=1), for soil/sand. Vegetation: BRDF
@@ -133,7 +133,7 @@ equation) but with exponent b=1.0 (lambda less than 720 nm), and b=3/4 (lambda g
             <default>0</default>
           </options>
         </parameter>
-        <parameter id="brdf_lower_bound>" scope="runtime" maxOccurs="1" title="BRDF Lower Bound>" abstract="In most cases, g=0.2 to 0.25 is adequate, in extreme cases of overcorrection g=0.1 should be applied ">0.22</parameter>
+        <parameter id="brdf_lower_bound" scope="runtime" maxOccurs="1" title="BRDF Lower Bound" abstract="In most cases, g=0.2 to 0.25 is adequate, in extreme cases of overcorrection g=0.1 should be applied ">0.22</parameter>
         <parameter id="dem_unit" scope="runtime" maxOccurs="1" title="DEM Unit" abstract="0=[m], 1=[dm], 2=[cm], Default = 0">
           <options>
             <option>0</option>

@@ -109,7 +109,7 @@ function preview() {
 
 function prep_conf() {
 
-
+  
 
   xmlstarlet \
     ed -L \
@@ -155,28 +155,27 @@ function process_2A() {
   local ref=$1
   local resolution=$2
   local format=$3
-  local proj_win=$4
-  local dem=$5
-  local granules=$6
+  local pa=$4
+  local granules=$5
   local online_resource=""
-
 
   read identifier online_resource startdate enddate orbit_number wrslon < <( opensearch-client -m EOP ${ref} identifier,enclosure,startdate,enddate,orbitNumber,wrsLongitudeGrid  | tr "," " " )
 
   [ -z ${online_resource} ] && return ${ERR_NO_RESOLUTION}
 
-  local_s2="$( echo "${online_resource}" | ciop-copy -O ${TMPDIR} - )"
-  
+  local_1c="$( echo "${online_resource}" | ciop-copy -O ${TMPDIR} - )"
 
-  [ ! -d ${local_s2} ] && return ${ERR_DOWNLOAD_1C}
+  [ ! -d ${local_1c} ] && return ${ERR_DOWNLOAD_1C}
 
-  cd ${local_s2}
+  cd ${local_1c}
 
   # check if dem is needed
-  [ "${dem}" == "TRUE" ] && {
+  local dem
+  [ "$( ciop-getparam dem )" == "Yes" ] && {
+
     ciop-log "INFO" "A DEM will be used"  
     # set dem path in ${SEN2COR_CONF}
-    SEN2COR_DEM=${local_s2}/DEM
+    SEN2COR_DEM=${local_1c}/DEM
     mkdir -p ${SEN2COR_DEM}
     
     # xmlstartlet
@@ -207,22 +206,9 @@ function process_2A() {
 
   [ "${format}" == "GeoTiff" ] && {
 
-    convert ${local_s2}/${identifier}.SAFE ${local_s2}/${level_2a}.SAFE ${format} ${proj_win}
+    ciop-log "INFO" "Conversion to GeoTiff"    
 
-  #  cd ${level_2a}.SAFE
- 
-  #  metadata="$( find . -maxdepth 1 -name "*MTD*.xml" )"
-  #  counter=0
-  #  gdalinfo ${metadata} 2> /dev/null | grep -E  "SUBDATASET_._NAME" \
-  #   | grep -v "PREVIEW" |  cut -d "=" -f 2 | while read subset
-  #  do
-  #    ciop-log "INFO" "Process ${subset}"
-  #    gdal_translate \
-  #      ${subset} \
-  #      ${TMPDIR}/${level_2a}_${counter}.TIF 1>&2 || return ${ERR_GDAL_TRANSLATE}
-  #
-  #    echo ${TMPDIR}/${level_2a}_${counter}.TIF #.gz
-  # done
+    convert ${local_s2}/${identifier}.SAFE ${local_s2}/${level_2a}.SAFE ${format} ${proj_win}
 
   } || {
 
@@ -232,25 +218,6 @@ function process_2A() {
     echo ${TMPDIR}/${level_2a}.tgz
 
   }
-
-#  preview ${local_s2}/${level_2a}.SAFE 
- 
-  # Preview
-  #cd ${level_2a}.SAFE
-
-  #  metadata="$( find . -maxdepth 1 -name "*MTD*.xml" )"
-  #  counter=0
-  #  gdalinfo ${metadata} 2> /dev/null | grep -E  "SUBDATASET_._NAME" \
-  #   | grep "PREVIEW" |  cut -d "=" -f 2 | while read subset
-  #  do
-  #    ciop-log "INFO" "Process ${subset}"
-  #    gdal_translate \
-  #      -of PNG \
-  #      ${subset} \
-  #      ${TMPDIR}/${level_2a}_${counter}.png 1>&2 || return ${ERR_GDAL_TRANSLATE}
-  #
-  #    echo ${TMPDIR}/${level_2a}_${counter}.png
-  # done
 
 }
 
@@ -278,15 +245,11 @@ function main() {
   local pa="$( ciop-getparam pa )"
   local dem
   
-  [ "$( ciop-getparam dem )" == "Yes" ] && dem="TRUE" || dem="FALSE"
+  # create sen2cor generic configuration 
+  prep_conf
 
+  # TODO
   local short_pa=CM
-
-  local proj_win
-
-  proj_win="$( get_projwin ${pa} )"
-
-  [ -z "${proj_win}" ] && return ${ERR_PROJWIN}
 
   while read input
   do
@@ -302,7 +265,7 @@ function main() {
 
     ciop-log "INFO" "Processsing $( echo ${granules} | tr "|" "\n" | wc -l ) tiles of Sentinel-2 product ${identifier}"
 
-    results="$( process_2A ${ref} ${resolution} ${format} "${proj_win}" ${dem} ${granules} || return $? )"
+    results="$( process_2A ${ref} ${resolution} ${format} "${short_pa}" ${granules} || return $? )"
     res=$?
 
     [ "${res}" != "0"  ] && return ${res}   
@@ -395,8 +358,6 @@ function main() {
         "${orbit_number}" \
         ${target_xml}
 
-      #ciop-publish -m ${result} || return ${ERR_PUBLISH}
-      #ciop-publish -m ${result}.xml || return ${ERR_PUBLISH} 
    done
  
     # compress and publish
@@ -407,20 +368,13 @@ function main() {
       cp ${SEN2COR_CONF} ${res_dir}/$( basename ${res_dir} )_L2A_GIPP.xml
 
       ciop-log "INFO" "Compress ${res_dir}"
-      tar -cvzf ${res_dir}.tgz -C ${TMPDIR} $( basename ${res_dir} ) 
+      tar -czf ${res_dir}.tgz -C ${TMPDIR} $( basename ${res_dir} ) 
       ciop-log "INFO" "Publish ${res_dir}.tgz"
       ciop-publish -m ${res_dir}.tgz || return ${ERR_PUBLISH}
       
       rm -fr ${res_dir} ${res_dir}.tgz
     done
 
-
- #   for result in $( echo ${results} | tr " " "\n" | grep png )
-#    do
-#      ciop-publish -m ${result} || return ${ERR_PUBLISH}
-#    done
-    #rm -fr ${creaf_dir}
-    #rm -fr S2*
     tree ${TMPDIR}   
 
   done
