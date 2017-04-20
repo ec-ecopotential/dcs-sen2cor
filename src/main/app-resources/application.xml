@@ -10,8 +10,27 @@
 <!--        <parameter id="bbox" type="opensearch" target="geo:box" scope="runtime" maxOccurs="1" title="Area of Interest expressed as a bounding box" abstract="Area of Interest expressed as min longitude,min latitude,max longitude,max latitude (e.g. 14.75,37.41,15.21,37.74)">-6.93,36.64,-6.03,37.47</parameter>-->
         <parameter id="pa" scope="runtime" maxOccurs="1" title="Protected Area" abstract="Protected area">
           <options>
+            <option>Abisko</option>
+            <option>BayersicherWald</option>
             <option>Camargue</option>
+            <option>Curonian Lagoon</option>
+            <option>DanubeDelta</option>
+            <option>Donana</option>
             <option>Gran Paradiso</option>
+            <option>Hardangervidda</option>
+            <option>HarHaNegev</option>
+            <option>High Tatra</option>
+            <option>Kruger_incl.rural areas</option>
+            <option>La Palma</option>
+            <option>Montado</option>
+            <option>Murgia Alta Park</option>
+            <option>Northern Limestone</option>
+            <option>Ohrid Prespa</option>
+            <option>Peneda Geres</option>
+            <option>Samaria</option>
+            <option>Swiss National Park</option>
+            <option>Sierra Nevada Natural Park</option>
+              <option>Wadden Sea</option>
             <default>Camargue</default>
           </options>
 </parameter>
