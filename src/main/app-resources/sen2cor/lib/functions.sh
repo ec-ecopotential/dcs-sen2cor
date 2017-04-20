@@ -142,10 +142,10 @@ function prep_conf() {
     ${SEN2COR_CONF}
 
 
-WV_Watermask
-Cirrus_Correction
-BRDF_Correction
-BRDF_Lower_Bound
+#WV_Watermask
+#Cirrus_Correction
+#BRDF_Correction
+#BRDF_Lower_Bound
 }
 
 
@@ -228,7 +228,7 @@ function process_2A() {
 
     ciop-log "INFO" "Compression Level 2A in SAFE format"
 
-    tar cfz ${TMPDIR}/${level_2a}.tgz "${level_2a}.SAFE" 1>&2 || return ${ERR_COMPRESSION}
+    tar cfz ${TMPDIR}/${level_2a}.tgz -C ${TMPDIR} "${level_2a}.SAFE" 1>&2 || return ${ERR_COMPRESSION}
     echo ${TMPDIR}/${level_2a}.tgz
 
   }
@@ -407,7 +407,7 @@ function main() {
       cp ${SEN2COR_CONF} ${res_dir}/$( basename ${res_dir} )_L2A_GIPP.xml
 
       ciop-log "INFO" "Compress ${res_dir}"
-      tar cvfz ${res_dir}.tgz ${res_dir}
+      tar -cvzf ${res_dir}.tgz -C ${TMPDIR} $( basename ${res_dir} ) 
       ciop-log "INFO" "Publish ${res_dir}.tgz"
       ciop-publish -m ${res_dir}.tgz || return ${ERR_PUBLISH}
       
