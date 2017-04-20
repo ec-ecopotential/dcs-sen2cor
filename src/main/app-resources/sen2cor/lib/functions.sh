@@ -201,7 +201,7 @@ function prep_conf() {
   xmlstarlet \
     ed -L \
     -u "//Level-2A_Ground_Image_Processing_Parameter/Atmospheric_Correction/Calibration/Altitude" \
-    -v "${alltitude}" \
+    -v "${altitude}" \
     ${SEN2COR_CONF}
     
   xmlstarlet \
@@ -276,7 +276,7 @@ function process_2A() {
 
     ciop-log "INFO" "Conversion to GeoTiff"    
 
-    convert ${local_s2}/${identifier}.SAFE ${local_s2}/${level_2a}.SAFE ${format} ${proj_win}
+    convert ${local_1c}/${identifier}.SAFE ${local_1c}/${level_2a}.SAFE ${format} ${proj_win}
 
   } || {
 
@@ -302,6 +302,18 @@ function get_projwin() {
 
 }
 
+function get_short_pa() {
+
+  local pa="$1"
+  local short_pa
+
+  short_pa="$( cat ${_CIOP_APPLICATION_PATH}/etc/pa.bbox | grep "${pa}" | cut -d "," -f 1 )"
+
+  [ -z "${short_pa}" ] && return ${ERR_NO_PA}
+
+  echo "${short_pa}"
+
+}
 
 function main() {
 
@@ -316,8 +328,7 @@ function main() {
   # create sen2cor generic configuration 
   prep_conf
 
-  # TODO
-  local short_pa=CM
+  local short_pa="$( get_short_pa ${pa} )"
 
   while read input
   do
@@ -357,8 +368,10 @@ function main() {
       result=${creaf_dir}/${creaf_name}
 
       # update metadata
-      cp /application/sen2cor/etc/eop-template.xml ${result}.xml
-      target_xml=${result}.xml
+      target_xml=${result}_eop.xml
+      target_xml_md=${result}.xml
+      cp /application/sen2cor/etc/eop-template.xml ${target_xml}
+      cp /application/sen2cor/etc/md-template.xml ${target_xml_md}
 
       # set identifier
       metadata \
@@ -430,7 +443,7 @@ function main() {
  
     # compress and publish
     cd ${TMPDIR}
-    for res_dir in $( cat ${TMPDIR}/results )
+    for res_dir in $( cat ${TMPDIR}/results | sort -u )
     do
       # copy sen2cor configuration
       cp ${SEN2COR_CONF} ${res_dir}/$( basename ${res_dir} )_L2A_GIPP.xml
@@ -441,7 +454,11 @@ function main() {
       ciop-publish -m ${res_dir}.tgz || return ${ERR_PUBLISH}
       
       rm -fr ${res_dir} ${res_dir}.tgz
+
     done
+   
+    rm -f ${TMPDIR}/results 
+    rm -fr ${TMPDIR}/${identifier}
 
     tree ${TMPDIR}   
 
