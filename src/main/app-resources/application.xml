@@ -103,7 +103,7 @@ average of water vapour of land pixels is assigned to water pixels (line-average
             <default>1</default>
           </options>
         </parameter>
-        <parameter id="cirrus correction" scope="runtime" maxOccurs="1" title="Cirrus Correction" abstract="Flag for cirrus removal 0: no/disabled, 1: yes/enabled">
+        <parameter id="cirrus_correction" scope="runtime" maxOccurs="1" title="Cirrus Correction" abstract="Flag for cirrus removal 0: no/disabled, 1: yes/enabled">
           <options>
             <option>0</option>
             <option>1</option>
