@@ -379,6 +379,10 @@ function main() {
         "$( basename "${result}" )" \
         ${target_xml}
 
+      metadata_iso \
+        "//A:MD_Metadata/A:fileIdentifier/B:CharacterString" \
+        "$( basename "${result}" )" \
+        ${target_xml_md}
       # TODO
       # metadata_iso \
       #   "xpath expression" \
@@ -495,14 +499,12 @@ function metadata_iso() {
   local value="$2"
   local target_xml="$3"
 
-  # TODO update this
-  # xmlstarlet ed -L \
-  #  -N A="http://www.opengis.net/opt/2.1" \
-  #  -N B="http://www.opengis.net/om/2.0" \
-  #  -N C="http://www.opengis.net/gml/3.2" \
-  #  -N D="http://www.opengis.net/eop/2.1" \
-  #  -u  "${xpath}" \
-  #  -v "${value}" \
-  #  ${target_xml}
+  # TODO 
+  xmlstarlet ed -L \
+   -N A="http://www.isotc211.org/2005/gmd" \
+   -N B="http://www.isotc211.org/2005/gco" \
+   -u  "${xpath}" \
+   -v "${value}" \
+   ${target_xml}
 
 }
