@@ -1,4 +1,4 @@
-set -x
+#set -x
 # define the exit codes
 SUCCESS=0
 ERR_NO_RESOLUTION=5
@@ -280,7 +280,7 @@ function process_2A() {
 
   } || {
 
-    ciop-log "INFO" "Compression Level 2A in SAFE format"
+    ciop-log "INFO" "Compression Level 2A in SAFE format  ${format}"
 
     tar cfz ${TMPDIR}/${level_2a}.tgz -C ${TMPDIR} "${level_2a}.SAFE" 1>&2 || return ${ERR_COMPRESSION}
     echo ${TMPDIR}/${level_2a}.tgz
@@ -332,7 +332,7 @@ function main() {
 
   while read input
   do
-    ciop-log "INFO" "Processing ${input}"
+    ciop-log "INFO" "Processing input ${input}"
 
     ref="$( echo ${input} | cut -d "," -f 1)"
 
@@ -342,7 +342,7 @@ function main() {
 
     [ "${ref}" == ${granules} ] && granules=""
 
-    ciop-log "INFO" "Processsing $( echo ${granules} | tr "|" "\n" | wc -l ) tiles of Sentinel-2 product ${identifier}"
+    ciop-log "INFO" "Processing $( echo ${granules} | tr "|" "\n" | wc -l ) tiles of Sentinel-2 product ${identifier} in format ${format}"
 
     results="$( process_2A ${ref} ${resolution} ${format} "${short_pa}" ${granules} || return $? )"
     res=$?
@@ -351,6 +351,7 @@ function main() {
 
     for result in $( echo ${results} | tr " " "\n" | grep -v png )
     do
+      echo "result: ${result}"
       mission=$( echo ${identifier} | cut -c 1-3 )
       tile=$( basename ${result} | cut -d "_" -f 2 )
       acq_time=$( basename ${result} | cut -d "_" -f 3 )
@@ -372,6 +373,10 @@ function main() {
       target_xml_md=${result}.xml
       cp /application/sen2cor/etc/eop-template.xml ${target_xml}
       cp /application/sen2cor/etc/md-template.xml ${target_xml_md}
+      
+      ciop-log "DEBUG" "Checking creafdir"
+
+      tree ${creaf_dir} 
 
       # set identifier
       metadata \
@@ -449,6 +454,193 @@ function main() {
         "${orbit_number}" \
         ${target_xml}
 
+
+
+
+
+     #format="$( gdalinfo -json ${result} | jq -r ".driverLongName" )"
+     nw_corner="$( gdalinfo -json ${result} | jq -r ".cornerCoordinates | .upperLeft | tostring" | sed 's/\(\[\|\]\)//g' | tr "," " " )"
+     se_corner="$( gdalinfo -json ${result} | jq -r ".cornerCoordinates | .lowerRight | tostring" | sed 's/\(\[\|\]\)//g' | tr "," " " )"
+     epsg_code="http://www.opengis.net/def/crs/EPSG/0/$( gdalinfo -json ${result} | jq -r ".coordinateSystem | .wkt" | tail -n  1 | cut -d '"' -f 4 )"
+     title="Sentinel 2 Surface Reflectance $( basename $result | cut -d "_" -f 6 )"
+     abstract="Sentinel 2 Surface Reflectance $( basename $result | cut -d "_" -f 6 ) Product Data"
+     min_lon="$( gdalinfo -json  ${result} | jq -r " .wgs84Extent | .coordinates | tostring" | sed 's/\(\[\|\]\)//g' | tr "," "\n" | sed -n 1~2p | awk 'NR == 1 { min=$1 }
+        { if ($1<min) min=$1 }
+        END { printf "%s", min }' )"
+     min_lat="$( gdalinfo -json  ${result} | jq -r " .wgs84Extent | .coordinates | tostring" | sed 's/\(\[\|\]\)//g' | tr "," "\n" | sed -n 2~2p | awk 'NR == 1  { min=$1 }
+        { if ($1<min) min=$1 }
+        END { printf "%s", min }' )"
+     max_lon="$( gdalinfo -json  ${result} | jq -r " .wgs84Extent | .coordinates | tostring" | sed 's/\(\[\|\]\)//g' | tr "," "\n" | sed -n 1~2p | awk 'NR == 1 { max=$1 }
+        { if ($1>max) max=$1 }
+        END { printf "%s", max }' )"
+     max_lat="$( gdalinfo -json  ${result} | jq -r " .wgs84Extent | .coordinates | tostring" | sed 's/\(\[\|\]\)//g' | tr "," "\n" | sed -n 2~2p | awk 'NR == 1 { max=$1 }
+        { if ($1>max) max=$1 }
+        END { printf "%s", max }' )"
+     row_size="$( gdalinfo -json ${result} | jq -r ".size | tostring" | sed 's/\(\[\|\]\)//g' | cut -d ',' -f1 )"
+     column_size="$( gdalinfo -json ${result} | jq -r ".size | tostring" | sed 's/\(\[\|\]\)//g' | cut -d ',' -f2 )"
+     pixel_size="$( gdalinfo -json ${result} | jq -r ".geoTransform | tostring" | sed 's/\(\[\|\]\)//g' | cut -d ',' -f2 )"
+
+     #p_identifier=$( gdalinfo -json ${result} | jq -r ".files | tostring" | sed 's/\(\[\|\]\)//g' | tr "," " " )
+
+     metadata_iso \
+      "//A:MD_Metadata/A:fileIdentifier/B:CharacterString" \
+      "${identifier}" \
+      ${target_xml_md}
+
+     metadata_iso \
+      "//A:MD_Metadata/A:contact/A:CI_ResponsibleParty/A:organisationName/B:CharacterString" \
+      "TERRADUE" \
+      ${target_xml_md}
+  
+
+     metadata_iso \
+      "//A:MD_Metadata/A:contact/A:CI_ResponsibleParty/A:contactInfo/A:CI_Contact/A:address/A:CI_Address/A:electronicMailAddress/B:CharacterString" \
+      "info@terradue.com" \
+      ${target_xml_md}
+
+     metadata_iso \
+      "//A:MD_Metadata/A:dateStamp/B:Date" \
+      "$( date +%Y-%m-%d )" \
+     ${target_xml_md}
+  
+     metadata_iso \
+      "//A:MD_Metadata/A:spatialRepresentationInfo/A:MD_Georectified/A:axisDimensionProperties/A:MD_Dimension[A:dimensionName/A:MD_DimensionNameTypeCode/text()=\"Row\"]/A:dimensionSize/B:Integer" \
+      "${row_size}" \
+     ${target_xml_md}
+
+     metadata_iso \
+      "//A:MD_Metadata/A:spatialRepresentationInfo/A:MD_Georectified/A:axisDimensionProperties/A:MD_Dimension[A:dimensionName/A:MD_DimensionNameTypeCode/text()=\"Column\"]/A:dimensionSize/B:Integer" \
+      "${column_size}" \
+     ${target_xml_md}
+
+     metadata_iso \
+      "//A:MD_Metadata/A:spatialRepresentationInfo/A:MD_Georectified/A:axisDimensionProperties/A:MD_Dimension/A:resolution/B:Length" \
+      "${pixel_size}" \
+     ${target_xml_md}
+
+     metadata_iso \
+      "//A:MD_Metadata/A:spatialRepresentationInfo/A:MD_Georectified/A:cornerPoints/C:Point[@C:id=\"NW_corner\"]/C:pos" \
+      "${nw_corner}" \
+     ${target_xml_md}
+
+     metadata_iso \
+      "//A:MD_Metadata/A:spatialRepresentationInfo/A:MD_Georectified/A:cornerPoints/C:Point[@C:id=\"SE_corner\"]/C:pos" \
+      "${se_corner}" \
+     ${target_xml_md}
+
+     metadata_iso \
+      "//A:MD_Metadata/A:referenceSystemInfo/A:MD_ReferenceSystem/A:referenceSystemIdentifier/A:RS_Identifier/A:code/B:CharacterString" \
+      "${epsg_code}" \
+     ${target_xml_md}
+
+metadata_iso \
+ "//A:MD_Metadata/A:identificationInfo/A:MD_DataIdentification/A:citation/A:CI_Citation/A:title/B:CharacterString" \
+ "${title}" \
+ ${target_xml_md}
+
+metadata_iso \
+ "//A:MD_Metadata/A:identificationInfo/A:MD_DataIdentification/A:citation/A:CI_Citation/A:date/A:CI_Date/A:date/B:Date" \
+ "$( date +%Y-%m-%d )" \
+ ${target_xml_md}
+
+metadata_iso \
+ "//A:MD_Metadata/A:identificationInfo/A:MD_DataIdentification/A:citation/A:CI_Citation/A:identifier/A:RS_Identifier/A:code/B:CharacterString" \
+ "${identifier}" \
+ ${target_xml_md}
+
+metadata_iso \
+ "//A:MD_Metadata/A:identificationInfo/A:MD_DataIdentification/A:abstract/B:CharacterString" \
+ "${abstract}" \
+ ${target_xml_md}
+
+metadata_iso \
+ "//A:MD_Metadata/A:identificationInfo/A:MD_DataIdentification/A:pointOfContact/A:CI_ResponsibleParty/A:organisationName/B:CharacterString" \
+ "TERRADUE" \
+ ${target_xml_md}
+
+metadata_iso \
+ "//A:MD_Metadata/A:identificationInfo/A:MD_DataIdentification/A:pointOfContact/A:CI_ResponsibleParty/A:contactInfo/A:CI_Contact/A:address/A:CI_Address/A:electronicMailAddress/B:CharacterString" \
+ "info@terradue.com" \
+ ${target_xml_md}
+
+metadata_iso \
+ "//A:MD_Metadata/A:identificationInfo/A:MD_DataIdentification/A:extent/A:EX_Extent/A:geographicElement/A:EX_GeographicBoundingBox/A:westBoundLongitude/B:Decimal" \
+ "${min_lon}" \
+ ${target_xml_md}
+
+metadata_iso \
+ "//A:MD_Metadata/A:identificationInfo/A:MD_DataIdentification/A:extent/A:EX_Extent/A:geographicElement/A:EX_GeographicBoundingBox/A:eastBoundLongitude/B:Decimal" \
+ "${max_lon}" \
+ ${target_xml_md}
+
+metadata_iso \
+ "//A:MD_Metadata/A:identificationInfo/A:MD_DataIdentification/A:extent/A:EX_Extent/A:geographicElement/A:EX_GeographicBoundingBox/A:southBoundLatitude/B:Decimal" \
+ "${min_lat}" \
+ ${target_xml_md}
+
+metadata_iso \
+ "//A:MD_Metadata/A:identificationInfo/A:MD_DataIdentification/A:extent/A:EX_Extent/A:geographicElement/A:EX_GeographicBoundingBox/A:northBoundLatitude/B:Decimal" \
+ "${max_lat}" \
+ ${target_xml_md}
+
+metadata_iso \
+ "//A:MD_Metadata/A:identificationInfo/A:MD_DataIdentification/A:extent/A:EX_Extent/A:temporalElement/A:EX_TemporalExtent/A:extent/C:TimePeriod/C:begin/C:TimeInstant/C:timePosition" \
+ "${startdate}" \
+ ${target_xml_md}
+
+metadata_iso \
+ "//A:MD_Metadata/A:identificationInfo/A:MD_DataIdentification/A:extent/A:EX_Extent/A:temporalElement/A:EX_TemporalExtent/A:extent/C:TimePeriod/C:end/C:TimeInstant/C:timePosition" \
+ "${enddate}" \
+ ${target_xml_md}
+
+metadata_iso \
+ "//A:MD_Metadata/A:contentInfo/A:MD_CoverageDescription/A:dimension/A:MD_RangeDimension/A:sequenceIdentifier/B:MemberName/B:attributeType/B:TypeName/B:aName/B:CharacterString" \
+ "unsigned integer" \
+ ${target_xml_md}
+
+     metadata_iso \
+     "//A:MD_Metadata/A:distributionInfo/A:MD_Distribution/A:distributionFormat/A:MD_Format/A:name/B:CharacterString" \
+     "JPEG2000" \
+      ${target_xml_md}
+
+     metadata_iso \
+      "//A:MD_Metadata/A:distributionInfo/A:MD_Distribution/A:distributionFormat/A:MD_Format/A:name/B:CharacterString" \
+      "JPEG2000" \
+      ${target_xml_md}
+
+     metadata_iso \
+      "//A:MD_Metadata/A:distributionInfo/A:MD_Distribution/A:distributor/A:MD_Distributor/A:distributorContact/A:CI_ResponsibleParty/A:organisationName/B:CharacterString" \
+      "CNR" \
+      ${target_xml_md}
+     
+     values="Filters \ Median_Filter: 0
+Atmospheric_Correction \ Look_Up_Tables \ Aerosol_Type: $( ciop-getparam aerosol_type )
+Atmospheric_Correction \ Look_Up_Tables \ Mid_Latitude: $( ciop-getparam mid_latitude )
+Atmospheric_Correction \ Look_Up_Tables \ Ozone_Content: $( ciop-getparam ozone_content )
+Atmospheric_Correction \ Flags \ WV_Correction: $( ciop-getparam wv_correction )
+Atmospheric_Correction \ Flags \ VIS_Update_Mode: $( ciop-getparam vis_update_mode )
+Atmospheric_Correction \ Flags \ WV_Watermask: $( ciop-getparam wv_watermask )
+Atmospheric_Correction \ Flags \ Cirrus_Correction: $( ciop-getparam cirrus_correction )
+Atmospheric_Correction \ Flags \ BRDF_Correction: $( ciop-getparam brdf_correction )
+Atmospheric_Correction \ Flags \ BRDF_Lower_Bound: $( ciop-getparam brdf_lower_bound )
+Atmospheric_Correction \ Calibration \ DEM_Unit: $( ciop-getparam dem_unit )
+Atmospheric_Correction \ Calibration \ Adj_Km: $( ciop-getparam adj_km )
+Atmospheric_Correction \ Calibration \ Visibility: $( ciop-getparam visibility )
+Atmospheric_Correction \ Calibration \ Altitude: $( ciop-getparam altitude )
+Atmospheric_Correction \ Calibration \ Smooth_WV_Map: $( ciop-getparam smooth_wv_map )
+Atmospheric_Correction \ Calibration \ WV_Threshold_Cirrus: $( ciop-getparam wv_threshold_cirrus )"
+
+     metadata_iso \
+      "//A:MD_Metadata/A:dataQualityInfo/A:DQ_DataQuality/A:lineage/A:LI_Lineage/A:statement/B:CharacterString" \
+      "${values}" \
+      ${target_xml_md}
+
+     metadata_iso \
+      "//A:MD_Metadata/A:identificationInfo/A:MD_DataIdentification/A:extent/A:EX_Extent/A:geographicElement/A:EX_GeographicDescription/A:geographicIdentifier/A:MD_Identifier/A:code/B:CharacterString" \
+      "${pa}" \
+      md_template.xml
+
+
    done
  
     # compress and publish
@@ -494,7 +686,6 @@ function metadata() {
 }
 
 function metadata_iso() {
- 
   local xpath="$1"
   local value="$2"
   local target_xml="$3"
@@ -503,6 +694,7 @@ function metadata_iso() {
   xmlstarlet ed -L \
    -N A="http://www.isotc211.org/2005/gmd" \
    -N B="http://www.isotc211.org/2005/gco" \
+   -N C="http://www.opengis.net/gml" \
    -u  "${xpath}" \
    -v "${value}" \
    ${target_xml}
