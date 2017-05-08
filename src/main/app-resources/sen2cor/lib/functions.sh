@@ -75,13 +75,13 @@ function convert() {
       ${_CIOP_APPLICATION_PATH}/sen2cor/bin/gdalcopyproj.py \
       ${source_res} \
       ${band}
-  
      # TODO add compression -co COMPRESS=LZW
-      #gdal_translate -of GTiff -epo -projwin $( echo ${proj_win} | tr "," " " ) ${band} ${TMPDIR}/${tif_name} 
-      gdal_translate \
-        -of GTiff \
-        ${band} \
-        ${tif_name} 1>&2    
+      ciop-log "INFO" "PROJ ${proj_win}"
+      gdal_translate -of GTiff -projwin $( echo ${proj_win} | tr "," " " ) ${band} ${tif_name} 1>&2 
+      #gdal_translate \
+      #  -of GTiff \
+      #  ${band} \
+      #  ${tif_name} 1>&2    
 
       echo ${tif_name}
 
@@ -274,7 +274,9 @@ function process_2A() {
 
   [ "${format}" == "GeoTiff" ] && {
 
-    ciop-log "INFO" "Conversion to GeoTiff"    
+    proj_win=$(get_projwin ${pa})
+
+    ciop-log "INFO" "Conversion to GeoTiff using proj_win ${proj_win}"    
 
     convert ${local_1c}/${identifier}.SAFE ${local_1c}/${level_2a}.SAFE ${format} ${proj_win}
 
@@ -294,7 +296,16 @@ function get_projwin() {
   local pa="$1"
   local win
 
-  win="$( cat ${_CIOP_APPLICATION_PATH}/etc/pa.projwin | grep "${pa}" | cut -d "," -f 2- )"
+  ciop-log "INFO" "PA: ${pa}"
+#  win="$( cat ${_CIOP_APPLICATION_PATH}/etc/pa.projwin | grep "${pa}" | cut -d "," -f 2- )"
+
+  #Changing y coord to make it compatible with gdal_translate ulx uly lrx lry
+
+  IFS=, read ulx lry lrx uly <<< "$( cat ${_CIOP_APPLICATION_PATH}/etc/pa.projwin | grep "${pa}" | cut -d "," -f 2- )"
+
+  win="${ulx},${uly},${lrx},${lry}"
+
+  ciop-log "INFO" "win: ${win}"
 
   [ -z "${win}" ] && return ${ERR_PROJWIN}
 
@@ -344,7 +355,7 @@ function main() {
 
     ciop-log "INFO" "Processing $( echo ${granules} | tr "|" "\n" | wc -l ) tiles of Sentinel-2 product ${identifier} in format ${format}"
 
-    results="$( process_2A ${ref} ${resolution} ${format} "${short_pa}" ${granules} || return $? )"
+    results="$( process_2A ${ref} ${resolution} ${format} "${pa}" ${granules} || return $? )"
     res=$?
 
     [ "${res}" != "0"  ] && return ${res}   
@@ -638,7 +649,7 @@ Atmospheric_Correction \ Calibration \ WV_Threshold_Cirrus: $( ciop-getparam wv_
      metadata_iso \
       "//A:MD_Metadata/A:identificationInfo/A:MD_DataIdentification/A:extent/A:EX_Extent/A:geographicElement/A:EX_GeographicDescription/A:geographicIdentifier/A:MD_Identifier/A:code/B:CharacterString" \
       "${pa}" \
-      md_template.xml
+      ${target_xml_md} 
 
 
    done
