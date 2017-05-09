@@ -1,191 +1,221 @@
 <?xml version="1.0" encoding="us-ascii"?>
 <application xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" id="application">
-  <jobTemplates>
-    <jobTemplate id="query">
-      <streamingExecutable>/application/query/run</streamingExecutable>
-      <defaultParameters>           
-        <parameter id="product_type" type="opensearch" target="eop:productType">S2MSI1C</parameter>
-        <parameter id="startdate" type="opensearch" target="time:start" scope="runtime" maxOccurs="1" title="Time of Interest start date/time" abstract="Time of Interest start date/time in ISO 8601 (e.g. 2016-04-21T06:50:41Z)">2017-03-01T00:00:00.000Z</parameter>
-        <parameter id="enddate" type="opensearch" target="time:end" scope="runtime" maxOccurs="1" title="Time of Interest end date/time" abstract="Time of Interest end date/time in ISO 8601 (e.g. 2016-04-21T06:50:41Z)">2017-03-10T23:59:59.000Z</parameter>
-<!--        <parameter id="bbox" type="opensearch" target="geo:box" scope="runtime" maxOccurs="1" title="Area of Interest expressed as a bounding box" abstract="Area of Interest expressed as min longitude,min latitude,max longitude,max latitude (e.g. 14.75,37.41,15.21,37.74)">-6.93,36.64,-6.03,37.47</parameter>-->
-        <parameter id="pa" scope="runtime" maxOccurs="1" title="Protected Area" abstract="Protected area">
-          <options>
-            <option>Abisko</option>
-            <option>BayersicherWald</option>
-            <option>Camargue</option>
-            <option>Curonian Lagoon</option>
-            <option>DanubeDelta</option>
-            <option>Donana</option>
-            <option>Gran Paradiso</option>
-            <option>Hardangervidda</option>
-            <option>HarHaNegev</option>
-            <option>High Tatra</option>
-            <option>Kruger_incl.rural areas</option>
-            <option>La Palma</option>
-            <option>Montado</option>
-            <option>Murgia Alta Park</option>
-            <option>Northern Limestone</option>
-            <option>Ohrid Prespa</option>
-            <option>Peneda Geres</option>
-            <option>Samaria</option>
-            <option>Swiss National Park</option>
-            <option>Sierra Nevada Natural Park</option>
-              <option>Wadden Sea</option>
-            <default>Camargue</default>
-          </options>
-</parameter>
-      </defaultParameters>
-      <defaultJobconf>
-        <property id="ciop.job.max.tasks">1</property>
-      </defaultJobconf>
-    </jobTemplate>
-    <jobTemplate id="sen2cor">
-      <streamingExecutable>/application/sen2cor/run</streamingExecutable>
-      <defaultParameters>
-        <parameter id="resolution" scope="runtime" maxOccurs="1" title="Resolution for Sentinel-2 Level-2A product in meters (10, 20 or 60)" abstract="Resolution for Sentinel-2 Level-2A product in meters (10, 20 or 60). The bands are resampled to the selceted target resolution">
- <options>
-        <option>10</option>
-        <option>20</option>
-        <option>60</option>
-        <default>60</default>
-    </options>
-</parameter>
- <parameter id="format" scope="runtime" maxOccurs="1" title="Sentinel-2 Level 2A output format (SAFE or GeoTiff)" abstract="Sentinel-2 Level 2A output format (SAFE or GeoTiff)">
-          <options>
-            <option>SAFE</option>
-            <option>GeoTiff</option>
-            <default>GeoTiff</default>
-          </options>
-        </parameter>
-<parameter id="pa" scope="runtime" maxOccurs="1" title="Protected Area" abstract="Protected area">
-          <options>
-            <option>Camargue</option>
-            <option>Gran Paradiso</option>
-            <default>Camargue</default>
-          </options>
-</parameter>
-        <parameter id="dem" scope="runtime" maxOccurs="1" title="Use SRTM DEM" abstract="Use SRTM DEM">
-          <options>
-            <option>No</option>
-            <option>Yes</option>
-            <default>Yes</default>
-          </options>
-        </parameter>
-        <parameter id="aerosol_type" scope="runtime" maxOccurs="1" title="Aerosol Type" abstract="Aerosol Type: RURAL, MARITIME, AUTO">
-          <options>
-            <option>RURAL</option>
-            <option>MARITIME</option>
-            <option>AUTO</option>
-            <default>AUTO</default>
-          </options>
-        </parameter>
-        <parameter id="mid_latitude" scope="runtime" maxOccurs="1" title="Mid Latitude" abstract="Mid Latitude: SUMMER, WINTER, AUTO">
-          <options>
-            <option>SUMMER</option>
-            <option>WINTER</option>
-            <option>AUTO</option>
-            <default>AUTO</default>
-          </options>
-        </parameter>
-          <parameter id="ozone_content" scope="runtime" maxOccurs="1" title="Ozone Content" abstract="Ozone Content: 0, f-k, t-y">
-          <options>
-            <option>f-k</option>
-            <option>t-y</option>
-            <option>0</option>
-            <default>0</default>
-          </options>
-        </parameter>
-         <parameter id="wv_correction" scope="runtime" maxOccurs="1" title="WV Correction" abstract="0: No WV correction, 1: only 940 nm bands, 2: only 1130 nm bands , 3: both regions used during wv retrieval,
-4: Thermal region ">
-          <options>
-            <option>0</option>
-            <option>1</option>
-            <option>2</option>
-            <option>3</option>
-            <option>4</option>
-            <default>1</default>
-          </options>
-        </parameter>
-          <parameter id="vis_update_mode" scope="runtime" maxOccurs="1" title="VIS Update Mode" abstract="0: constant, 1: variable visibility">
-          <options>
-            <option>0</option>
-            <option>1</option>
-            <default>1</default>
-          </options>
-        </parameter>
-             <parameter id="wv_watermask" scope="runtime" maxOccurs="1" title="WV Watermask" abstract="0: not replaced, 1: average water vapour value for land pixels is assigned to water pixels (land-average), 2: line
-average of water vapour of land pixels is assigned to water pixels (line-average)">
-          <options>
-            <option>0</option>
-            <option>1</option>
+    <jobTemplates>
+        <jobTemplate id="query">
+            <streamingExecutable>/application/query/run</streamingExecutable>
+            <defaultParameters>
+                <parameter id="product_type" type="opensearch" target="eop:productType">S2MSI1C</parameter>
+                <parameter id="startdate" type="opensearch" target="time:start" scope="runtime" maxOccurs="1" title="Time of Interest start date/time" abstract="Time of Interest start date/time in ISO 8601 (e.g. 2016-04-21T06:50:41Z)">2017-03-01T00:00:00.000Z</parameter>
+                <parameter id="enddate" type="opensearch" target="time:end" scope="runtime" maxOccurs="1" title="Time of Interest end date/time" abstract="Time of Interest end date/time in ISO 8601 (e.g. 2016-04-21T06:50:41Z)">2017-03-10T23:59:59.000Z</parameter>
+                <!--        <parameter id="bbox" type="opensearch" target="geo:box" scope="runtime" maxOccurs="1" title="Area of Interest expressed as a bounding box" abstract="Area of Interest expressed as min longitude,min latitude,max longitude,max latitude (e.g. 14.75,37.41,15.21,37.74)">-6.93,36.64,-6.03,37.47</parameter>-->
+                <parameter id="pa" scope="runtime" maxOccurs="1" title="Protected Area" abstract="Protected area">
+                    <options>
+                        <option>Abisko</option>
+                        <option>BayersicherWald</option>
+                        <option>Camargue</option>
+                        <option>Curonian Lagoon</option>
+                        <option>DanubeDelta</option>
+                        <option>Donana</option>
+                        <option>Gran Paradiso</option>
+                        <option>Hardangervidda</option>
+                        <option>HarHaNegev</option>
+                        <option>High Tatra</option>
+                        <option>Kruger_incl.rural areas</option>
+                        <option>La Palma</option>
+                        <option>Montado</option>
+                        <option>Murgia Alta Park</option>
+                        <option>Northern Limestone</option>
+                        <option>Ohrid Prespa</option>
+                        <option>Peneda Geres</option>
+                        <option>Samaria</option>
+                        <option>Swiss National Park</option>
+                        <option>Sierra Nevada Natural Park</option>
+                        <option>Wadden Sea</option>
+                        <default>Camargue</default>
+                    </options>
+                </parameter>
+            </defaultParameters>
+            <defaultJobconf>
+                <property id="ciop.job.max.tasks">1</property>
+            </defaultJobconf>
+        </jobTemplate>
+        <jobTemplate id="sen2cor">
+            <streamingExecutable>/application/sen2cor/run</streamingExecutable>
+            <defaultParameters>
+                <parameter id="resolution" scope="runtime" maxOccurs="1" title="Resolution for Sentinel-2 Level-2A product in meters (10, 20 or 60)" abstract="Resolution for Sentinel-2 Level-2A product in meters (10, 20 or 60). The bands are resampled to the selceted target resolution">
+                    <options>
+                        <option>10</option>
+                        <option>20</option>
+                        <option>60</option>
+                        <default>60</default>
+                    </options>
+                </parameter>
+                <parameter id="format" scope="runtime" maxOccurs="1" title="Sentinel-2 Level 2A output format (SAFE or GeoTiff)" abstract="Sentinel-2 Level 2A output format (SAFE or GeoTiff)">
+                    <options>
+                        <option>SAFE</option>
+                        <option>GeoTiff</option>
+                        <default>GeoTiff</default>
+                    </options>
+                </parameter>
+                <parameter id="pa" scope="runtime" maxOccurs="1" title="Protected Area" abstract="Protected area">
+                    <options>
+                        <option>Abisko</option>
+                        <option>BayersicherWald</option>
+                        <option>Camargue</option>
+                        <option>Curonian Lagoon</option>
+                        <option>DanubeDelta</option>
+                        <option>Donana</option>
+                        <option>Gran Paradiso</option>
+                        <option>Hardangervidda</option>
+                        <option>HarHaNegev</option>
+                        <option>High Tatra</option>
+                        <option>Kruger_incl.rural areas</option>
+                        <option>La Palma</option>
+                        <option>Montado</option>
+                        <option>Murgia Alta Park</option>
+                        <option>Northern Limestone</option>
+                        <option>Ohrid Prespa</option>
+                        <option>Peneda Geres</option>
+                        <option>Samaria</option>
+                        <option>Swiss National Park</option>
+                        <option>Sierra Nevada Natural Park</option>
+                        <option>Wadden Sea</option>
+                        <default>Camargue</default>
+                    </options>
+                </parameter>
+                <parameter id="dem" scope="runtime" maxOccurs="1" title="Use SRTM DEM" abstract="Use SRTM DEM">
+                    <options>
+                        <option>No</option>
+                        <option>Yes</option>
+                        <default>Yes</default>
+                    </options>
+                </parameter>
+                <parameter id="aerosol_type" scope="runtime" maxOccurs="1" title="Aerosol Type" abstract="Aerosol Type: RURAL, MARITIME, AUTO">
+                    <options>
+                        <option>RURAL</option>
+                        <option>MARITIME</option>
+                        <option>AUTO</option>
+                        <default>AUTO</default>
+                    </options>
+                </parameter>
+                <parameter id="mid_latitude" scope="runtime" maxOccurs="1" title="Mid Latitude" abstract="Mid Latitude: SUMMER, WINTER, AUTO">
+                    <options>
+                        <option>SUMMER</option>
+                        <option>WINTER</option>
+                        <option>AUTO</option>
+                        <default>AUTO</default>
+                    </options>
+                </parameter>
+                <parameter id="ozone_content" scope="runtime" maxOccurs="1" title="Ozone Content" abstract="Ozone Content: 0, f-k, t-y">
+                    <options>
+                        <option>0</option>
+                        <option>f</option>
+                        <option>g</option>
+                        <option>h</option>
+                        <option>i</option>
+                        <option>j</option>
+                        <option>k</option>
+                        <option>t</option>
+                        <option>u</option>
+                        <option>v</option>
+                        <option>w</option>
+                        <option>x</option>
+                        <option>y</option>
+                        <option>z</option>
+                        <default>0</default>
+                    </options>
+                </parameter>
+                <parameter id="wv_correction" scope="runtime" maxOccurs="1" title="WV Correction" abstract="0: No WV correction, 1: only 940 nm bands, 2: only 1130 nm bands , 3: both regions used during wv retrieval,
+                    4: Thermal region ">
+                    <options>
+                        <option>0</option>
+                        <option>1</option>
                         <option>2</option>
-            <default>1</default>
-          </options>
-        </parameter>
-        <parameter id="cirrus_correction" scope="runtime" maxOccurs="1" title="Cirrus Correction" abstract="Flag for cirrus removal 0: no/disabled, 1: yes/enabled">
-          <options>
-            <option>0</option>
-            <option>1</option>
-            <default>1</default>
-          </options>
-        </parameter>
-        <parameter id="brdf_correction" scope="runtime" maxOccurs="1" title="BRDF Correction" abstract="0: no BRDF correction,
-1: correction with cosine of local solar zenith angle (BRDF equation with b=1)
-2: correction with sqrt(cos) of local solar zenith angle (BRDF equation with b=0.5)
-11: correction with cosine of local solar zenith angle (BRDF equation with b=1), for soil/sand. Vegetation: BRDF
-equation but with exponent b=1/3 (lambda less than 720 nm), and b=3/4 (lambda greater than 720 nm), (weak correction).
-12: correction with cosine of local solar zenith angle (BRDF equation with b=1), for soil/sand. Vegetation: (BRDF
-equation) but with exponent b=1.0 (lambda less than 720 nm), and b=3/4 (lambda greater than 720 nm), (strong correction),
-21: correction with sqrt(cos) of local solar zenith angle (BRDF equation with b=1/2), for soil/sand. Vegetation: (BRDF
-equation) but with exponent b=1/3 (lambda less than 720 nm), and b=3/4 (lambda greater than 720 nm), (weak correction). This is the
-recommended standard yielding good results in most cases.
-22: correction with sqrt(cos) of local solar zenith angle (BRDF equation with b=1/2), for soil/sand. Vegetation: (BRDF
-equation) but with exponent b=1.0 (lambda less than 720 nm), and b=3/4 (lambda greater than 720 nm, (strong correction)">
-          <options>
-            <option>0</option>
-            <option>1</option>
-               <option>2</option>
-               <option>11</option>
-               <option>12</option>
-               <option>21</option>
-               <option>22</option>
-            <default>0</default>
-          </options>
-        </parameter>
-        <parameter id="brdf_lower_bound" scope="runtime" maxOccurs="1" title="BRDF Lower Bound" abstract="In most cases, g=0.2 to 0.25 is adequate, in extreme cases of overcorrection g=0.1 should be applied ">0.22</parameter>
-        <parameter id="dem_unit" scope="runtime" maxOccurs="1" title="DEM Unit" abstract="0=[m], 1=[dm], 2=[cm], Default = 0">
-          <options>
-            <option>0</option>
-            <option>1</option>
-              <option>2</option>
-            <default>0</default>
-          </options>
-        </parameter>
-          <parameter id="adj_km" scope="runtime" maxOccurs="1" title="Adjacency Range" abstract="Adjacency Range [km] Range of adjacency effect (reflected radiation from neighborhood in km)">1.000</parameter>
-          <parameter id="visibility" scope="runtime" maxOccurs="1" title="Visibility" abstract="visibility (between 5 and 120 km)">40.0</parameter>
-          <parameter id="altitude" scope="runtime" maxOccurs="1" title="Altitude" abstract="[km] Assumed altitude if no DEM is present [km]. Default = 0.10, equals 100 m">0.100</parameter>
-          <parameter id="smooth_wv_map" scope="runtime" maxOccurs="1" title="Smooth_WV_Map" abstract="- length of square box, [meters], Default =100 m -">100.0</parameter>
-          <parameter id="wv_threshold_cirrus" scope="runtime" maxOccurs="1" title="WV Threshold Cirrus" abstract="- water vapor threshold to switch off cirrus algorithm [cm]Range: 0.1-1.0 default = 0.25">0.25</parameter>
-          
-      </defaultParameters>
-      <defaultJobconf>
-        <property id="mapred.task.timeout">9900000000</property>
-      </defaultJobconf>
-    </jobTemplate>
-  </jobTemplates>
+                        <option>3</option>
+                        <option>4</option>
+                        <default>1</default>
+                    </options>
+                </parameter>
+                <parameter id="vis_update_mode" scope="runtime" maxOccurs="1" title="VIS Update Mode" abstract="0: constant, 1: variable visibility">
+                    <options>
+                        <option>0</option>
+                        <option>1</option>
+                        <default>1</default>
+                    </options>
+                </parameter>
+                <parameter id="wv_watermask" scope="runtime" maxOccurs="1" title="WV Watermask" abstract="0: not replaced, 1: average water vapour value for land pixels is assigned to water pixels (land-average), 2: line
+                    average of water vapour of land pixels is assigned to water pixels (line-average)">
+                    <options>
+                        <option>0</option>
+                        <option>1</option>
+                        <option>2</option>
+                        <default>1</default>
+                    </options>
+                </parameter>
+                <parameter id="cirrus_correction" scope="runtime" maxOccurs="1" title="Cirrus Correction" abstract="Flag for cirrus removal 0: no/disabled, 1: yes/enabled">
+                    <options>
+                        <option>0</option>
+                        <option>1</option>
+                        <default>1</default>
+                    </options>
+                </parameter>
+                <parameter id="brdf_correction" scope="runtime" maxOccurs="1" title="BRDF Correction" abstract="0: no BRDF correction,
+                    1: correction with cosine of local solar zenith angle (BRDF equation with b=1)
+                    2: correction with sqrt(cos) of local solar zenith angle (BRDF equation with b=0.5)
+                    11: correction with cosine of local solar zenith angle (BRDF equation with b=1), for soil/sand. Vegetation: BRDF
+                    equation but with exponent b=1/3 (lambda less than 720 nm), and b=3/4 (lambda greater than 720 nm), (weak correction).
+                    12: correction with cosine of local solar zenith angle (BRDF equation with b=1), for soil/sand. Vegetation: (BRDF
+                    equation) but with exponent b=1.0 (lambda less than 720 nm), and b=3/4 (lambda greater than 720 nm), (strong correction),
+                    21: correction with sqrt(cos) of local solar zenith angle (BRDF equation with b=1/2), for soil/sand. Vegetation: (BRDF
+                    equation) but with exponent b=1/3 (lambda less than 720 nm), and b=3/4 (lambda greater than 720 nm), (weak correction). This is the
+                    recommended standard yielding good results in most cases.
+                    22: correction with sqrt(cos) of local solar zenith angle (BRDF equation with b=1/2), for soil/sand. Vegetation: (BRDF
+                    equation) but with exponent b=1.0 (lambda less than 720 nm), and b=3/4 (lambda greater than 720 nm, (strong correction)">
+                    <options>
+                        <option>0</option>
+                        <option>1</option>
+                        <option>2</option>
+                        <option>11</option>
+                        <option>12</option>
+                        <option>21</option>
+                        <option>22</option>
+                        <default>0</default>
+                    </options>
+                </parameter>
+                <parameter id="brdf_lower_bound" scope="runtime" maxOccurs="1" title="BRDF Lower Bound" abstract="In most cases, g=0.2 to 0.25 is adequate, in extreme cases of overcorrection g=0.1 should be applied ">0.22</parameter>
+                <parameter id="dem_unit" scope="runtime" maxOccurs="1" title="DEM Unit" abstract="0=[m], 1=[dm], 2=[cm], Default = 0">
+                    <options>
+                        <option>0</option>
+                        <option>1</option>
+                        <option>2</option>
+                        <default>0</default>
+                    </options>
+                </parameter>
+                <parameter id="adj_km" scope="runtime" maxOccurs="1" title="Adjacency Range" abstract="Adjacency Range [km] Range of adjacency effect (reflected radiation from neighborhood in km)">1.000</parameter>
+                <parameter id="visibility" scope="runtime" maxOccurs="1" title="Visibility" abstract="visibility (between 5 and 120 km)">40.0</parameter>
+                <parameter id="altitude" scope="runtime" maxOccurs="1" title="Altitude" abstract="[km] Assumed altitude if no DEM is present [km]. Default = 0.10, equals 100 m">0.100</parameter>
+                <parameter id="smooth_wv_map" scope="runtime" maxOccurs="1" title="Smooth_WV_Map" abstract="- length of square box, [meters], Default =100 m -">100.0</parameter>
+                <parameter id="wv_threshold_cirrus" scope="runtime" maxOccurs="1" title="WV Threshold Cirrus" abstract="- water vapor threshold to switch off cirrus algorithm [cm]Range: 0.1-1.0 default = 0.25">0.25</parameter>
+                
+            </defaultParameters>
+            <defaultJobconf>
+                <property id="mapred.task.timeout">9900000000</property>
+            </defaultJobconf>
+        </jobTemplate>
+    </jobTemplates>
     <workflow id="workflow" title="Sentinel-2 atmospheric correction using SEN2COR" abstract="This processing services applies the SEN2COR atmospheric correction to Sentinel-2 Level 1C tiles. The inputs are thus Sentinel-2 products containing Top of Atmosphere reflectances (TOA) and the outputs are Sentinel-2 products including the tiles covering the area of interest and containing Bottom of Atmosphere reflectances (BOA) and optionally terrain- and cirrus corrected reflectance images, Aerosol Optical Thickness-, Water Vapour-, Scene Classification maps and Quality Indicators, including cloud and snow probabilities.">
-    <workflowVersion>1.0</workflowVersion>
-    <node id="query">
-      <job id="query"/>
-      <sources>
-        <source id="series" refid="string:list" scope="runtime" title="Catalogue URL" abstract="Catalogue URL" maxOccurs="1">https://catalog.terradue.com/sentinel2/description</source>
-      </sources>
-    </node>
-    <node id="sen2cor">
-      <job id="sen2cor"/>
-      <sources>
-        <source refid="wf:node">query</source>
-      </sources>
-    </node>
-  </workflow>
+        <workflowVersion>1.0</workflowVersion>
+        <node id="query">
+            <job id="query"/>
+            <sources>
+                <source id="series" refid="string:list" scope="runtime" title="Catalogue URL" abstract="Catalogue URL" maxOccurs="1">https://catalog.terradue.com/sentinel2/description</source>
+            </sources>
+        </node>
+        <node id="sen2cor">
+            <job id="sen2cor"/>
+            <sources>
+                <source refid="wf:node">query</source>
+            </sources>
+        </node>
+    </workflow>
 </application>

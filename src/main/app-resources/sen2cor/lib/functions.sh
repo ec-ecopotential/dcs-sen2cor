@@ -544,75 +544,75 @@ function main() {
       "${epsg_code}" \
      ${target_xml_md}
 
-metadata_iso \
- "//A:MD_Metadata/A:identificationInfo/A:MD_DataIdentification/A:citation/A:CI_Citation/A:title/B:CharacterString" \
- "${title}" \
- ${target_xml_md}
-
-metadata_iso \
- "//A:MD_Metadata/A:identificationInfo/A:MD_DataIdentification/A:citation/A:CI_Citation/A:date/A:CI_Date/A:date/B:Date" \
- "$( date +%Y-%m-%d )" \
- ${target_xml_md}
-
-metadata_iso \
- "//A:MD_Metadata/A:identificationInfo/A:MD_DataIdentification/A:citation/A:CI_Citation/A:identifier/A:RS_Identifier/A:code/B:CharacterString" \
- "${identifier}" \
- ${target_xml_md}
-
-metadata_iso \
- "//A:MD_Metadata/A:identificationInfo/A:MD_DataIdentification/A:abstract/B:CharacterString" \
- "${abstract}" \
- ${target_xml_md}
-
-metadata_iso \
- "//A:MD_Metadata/A:identificationInfo/A:MD_DataIdentification/A:pointOfContact/A:CI_ResponsibleParty/A:organisationName/B:CharacterString" \
- "TERRADUE" \
- ${target_xml_md}
-
-metadata_iso \
- "//A:MD_Metadata/A:identificationInfo/A:MD_DataIdentification/A:pointOfContact/A:CI_ResponsibleParty/A:contactInfo/A:CI_Contact/A:address/A:CI_Address/A:electronicMailAddress/B:CharacterString" \
- "info@terradue.com" \
- ${target_xml_md}
-
-metadata_iso \
- "//A:MD_Metadata/A:identificationInfo/A:MD_DataIdentification/A:extent/A:EX_Extent/A:geographicElement/A:EX_GeographicBoundingBox/A:westBoundLongitude/B:Decimal" \
- "${min_lon}" \
- ${target_xml_md}
-
-metadata_iso \
- "//A:MD_Metadata/A:identificationInfo/A:MD_DataIdentification/A:extent/A:EX_Extent/A:geographicElement/A:EX_GeographicBoundingBox/A:eastBoundLongitude/B:Decimal" \
- "${max_lon}" \
- ${target_xml_md}
-
-metadata_iso \
- "//A:MD_Metadata/A:identificationInfo/A:MD_DataIdentification/A:extent/A:EX_Extent/A:geographicElement/A:EX_GeographicBoundingBox/A:southBoundLatitude/B:Decimal" \
- "${min_lat}" \
- ${target_xml_md}
-
-metadata_iso \
- "//A:MD_Metadata/A:identificationInfo/A:MD_DataIdentification/A:extent/A:EX_Extent/A:geographicElement/A:EX_GeographicBoundingBox/A:northBoundLatitude/B:Decimal" \
- "${max_lat}" \
- ${target_xml_md}
-
-metadata_iso \
- "//A:MD_Metadata/A:identificationInfo/A:MD_DataIdentification/A:extent/A:EX_Extent/A:temporalElement/A:EX_TemporalExtent/A:extent/C:TimePeriod/C:begin/C:TimeInstant/C:timePosition" \
- "${startdate}" \
- ${target_xml_md}
-
-metadata_iso \
- "//A:MD_Metadata/A:identificationInfo/A:MD_DataIdentification/A:extent/A:EX_Extent/A:temporalElement/A:EX_TemporalExtent/A:extent/C:TimePeriod/C:end/C:TimeInstant/C:timePosition" \
- "${enddate}" \
- ${target_xml_md}
-
-metadata_iso \
- "//A:MD_Metadata/A:contentInfo/A:MD_CoverageDescription/A:dimension/A:MD_RangeDimension/A:sequenceIdentifier/B:MemberName/B:attributeType/B:TypeName/B:aName/B:CharacterString" \
- "unsigned integer" \
- ${target_xml_md}
+     metadata_iso \
+      "//A:MD_Metadata/A:identificationInfo/A:MD_DataIdentification/A:citation/A:CI_Citation/A:title/B:CharacterString" \
+      "${title}" \
+     ${target_xml_md}
 
      metadata_iso \
-     "//A:MD_Metadata/A:distributionInfo/A:MD_Distribution/A:distributionFormat/A:MD_Format/A:name/B:CharacterString" \
-     "JPEG2000" \
-      ${target_xml_md}
+      "//A:MD_Metadata/A:identificationInfo/A:MD_DataIdentification/A:citation/A:CI_Citation/A:date/A:CI_Date/A:date/B:Date" \
+      "$( date +%Y-%m-%d )" \
+     ${target_xml_md}
+
+     metadata_iso \
+      "//A:MD_Metadata/A:identificationInfo/A:MD_DataIdentification/A:citation/A:CI_Citation/A:identifier/A:RS_Identifier/A:code/B:CharacterString" \
+      "${identifier}" \
+     ${target_xml_md}
+
+     metadata_iso \
+      "//A:MD_Metadata/A:identificationInfo/A:MD_DataIdentification/A:abstract/B:CharacterString" \
+      "${abstract}" \
+     ${target_xml_md}
+
+     metadata_iso \
+      "//A:MD_Metadata/A:identificationInfo/A:MD_DataIdentification/A:pointOfContact/A:CI_ResponsibleParty/A:organisationName/B:CharacterString" \
+      "TERRADUE" \
+     ${target_xml_md}
+
+     metadata_iso \
+      "//A:MD_Metadata/A:identificationInfo/A:MD_DataIdentification/A:pointOfContact/A:CI_ResponsibleParty/A:contactInfo/A:CI_Contact/A:address/A:CI_Address/A:electronicMailAddress/B:CharacterString" \
+      "info@terradue.com" \
+     ${target_xml_md}
+
+     metadata_iso \
+      "//A:MD_Metadata/A:identificationInfo/A:MD_DataIdentification/A:extent/A:EX_Extent/A:geographicElement/A:EX_GeographicBoundingBox/A:westBoundLongitude/B:Decimal" \
+      "${min_lon}" \
+     ${target_xml_md}
+
+     metadata_iso \
+      "//A:MD_Metadata/A:identificationInfo/A:MD_DataIdentification/A:extent/A:EX_Extent/A:geographicElement/A:EX_GeographicBoundingBox/A:eastBoundLongitude/B:Decimal" \
+      "${max_lon}" \
+     ${target_xml_md}
+
+     metadata_iso \
+      "//A:MD_Metadata/A:identificationInfo/A:MD_DataIdentification/A:extent/A:EX_Extent/A:geographicElement/A:EX_GeographicBoundingBox/A:southBoundLatitude/B:Decimal" \
+      "${min_lat}" \
+     ${target_xml_md}
+
+     metadata_iso \
+      "//A:MD_Metadata/A:identificationInfo/A:MD_DataIdentification/A:extent/A:EX_Extent/A:geographicElement/A:EX_GeographicBoundingBox/A:northBoundLatitude/B:Decimal" \
+      "${max_lat}" \
+     ${target_xml_md}
+
+     metadata_iso \
+      "//A:MD_Metadata/A:identificationInfo/A:MD_DataIdentification/A:extent/A:EX_Extent/A:temporalElement/A:EX_TemporalExtent/A:extent/C:TimePeriod/C:begin/C:TimeInstant/C:timePosition" \
+      "${startdate}" \
+     ${target_xml_md}
+
+     metadata_iso \
+      "//A:MD_Metadata/A:identificationInfo/A:MD_DataIdentification/A:extent/A:EX_Extent/A:temporalElement/A:EX_TemporalExtent/A:extent/C:TimePeriod/C:end/C:TimeInstant/C:timePosition" \
+      "${enddate}" \
+     ${target_xml_md}
+
+     metadata_iso \
+      "//A:MD_Metadata/A:contentInfo/A:MD_CoverageDescription/A:dimension/A:MD_RangeDimension/A:sequenceIdentifier/B:MemberName/B:attributeType/B:TypeName/B:aName/B:CharacterString" \
+      "unsigned integer" \
+     ${target_xml_md}
+
+     metadata_iso \
+      "//A:MD_Metadata/A:distributionInfo/A:MD_Distribution/A:distributionFormat/A:MD_Format/A:name/B:CharacterString" \
+      "JPEG2000" \
+     ${target_xml_md}
 
      metadata_iso \
       "//A:MD_Metadata/A:distributionInfo/A:MD_Distribution/A:distributionFormat/A:MD_Format/A:name/B:CharacterString" \
