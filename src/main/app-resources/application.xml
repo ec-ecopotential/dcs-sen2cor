@@ -121,7 +121,6 @@
                         <option>w</option>
                         <option>x</option>
                         <option>y</option>
-                        <option>z</option>
                         <default>0</default>
                     </options>
                 </parameter>
