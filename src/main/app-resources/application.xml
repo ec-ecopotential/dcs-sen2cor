@@ -34,6 +34,8 @@
                         <default>Camargue</default>
                     </options>
                 </parameter>
+		<!--parameter id="cc" scope="runtime" minOccurs="0" title="Cloud coverage" abstract="Cloud coverage for the tiles (before Oct 16)"/-->
+		<parameter id="tilesinputs" scope="runtime" minOccurs="0" title="Tiles list" abstract="Tiles list to be processed (before Oct 16)"/>
             </defaultParameters>
             <defaultJobconf>
                 <property id="ciop.job.max.tasks">1</property>
@@ -195,10 +197,10 @@
                 <parameter id="altitude" scope="runtime" maxOccurs="1" title="Altitude" abstract="[km] Assumed altitude if no DEM is present [km]. Default = 0.10, equals 100 m">0.100</parameter>
                 <parameter id="smooth_wv_map" scope="runtime" maxOccurs="1" title="Smooth_WV_Map" abstract="- length of square box, [meters], Default =100 m -">100.0</parameter>
                 <parameter id="wv_threshold_cirrus" scope="runtime" maxOccurs="1" title="WV Threshold Cirrus" abstract="- water vapor threshold to switch off cirrus algorithm [cm]Range: 0.1-1.0 default = 0.25">0.25</parameter>
-                
+
             </defaultParameters>
             <defaultJobconf>
-                <property id="mapred.task.timeout">9900000000</property>
+                <property id="mapred.task.timeout">59000000</property>
             </defaultJobconf>
         </jobTemplate>
     </jobTemplates>
