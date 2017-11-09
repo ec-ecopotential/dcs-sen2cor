@@ -75,13 +75,15 @@ function convert() {
       ${_CIOP_APPLICATION_PATH}/sen2cor/bin/gdalcopyproj.py \
       ${source_res} \
       ${band}
-     # TODO add compression -co COMPRESS=LZW
-      ciop-log "INFO" "PROJ ${proj_win}"
-      gdal_translate -of GTiff -projwin $( echo ${proj_win} | tr "," " " ) ${band} ${tif_name} 1>&2 
+      ciop-log "INFO" "PROJ ${proj_win} and band ${band}"
+      cp ${band} /tmp/testP2/
+      #gdal_translate -of GTiff -co COMPRESS=LZW -projwin $( echo ${proj_win} | tr "," " " ) ${band} ${tif_name} 1>&2
+      gdal_translate -of GTiff -co COMPRESS=LZW ${band} ${tif_name} 1>&2
+      #gdalwarp -of GTiff -co COMPRESS=LZW -cutline ${shapefile} -crop_to_cutline ${band} ${tif_name}
       #gdal_translate \
       #  -of GTiff \
       #  ${band} \
-      #  ${tif_name} 1>&2    
+      #  ${tif_name} 1>&2
 
       echo ${tif_name}
 
@@ -102,7 +104,7 @@ function preview() {
       ${band} \
       ${preview_name} 1>&2 || return ${ERR_GDAL_TRANSLATE}
 
-    echo ${preview_name} 
+    echo ${preview_name}
 
   done
 }
@@ -130,7 +132,7 @@ function prep_conf() {
     -u "//Level-2A_Ground_Image_Processing_Parameter/Atmospheric_Correction/Look_Up_Tables/Aerosol_Type" \
     -v "${aerosol_type}" \
     ${SEN2COR_CONF}
- 
+
   xmlstarlet \
     ed -L \
     -u "//Level-2A_Ground_Image_Processing_Parameter/Atmospheric_Correction/Look_Up_Tables/Mid_Latitude" \
@@ -160,56 +162,56 @@ function prep_conf() {
     -u "//Level-2A_Ground_Image_Processing_Parameter/Atmospheric_Correction/Flags/WV_Watermask" \
     -v "${wv_watermask}" \
     ${SEN2COR_CONF}
-    
+
   xmlstarlet \
     ed -L \
     -u "//Level-2A_Ground_Image_Processing_Parameter/Atmospheric_Correction/Flags/Cirrus_Correction" \
     -v "${cirrus_correction}" \
     ${SEN2COR_CONF}
-    
-    
+
+
   xmlstarlet \
     ed -L \
     -u "//Level-2A_Ground_Image_Processing_Parameter/Atmospheric_Correction/Flags/BRDF_Correction" \
     -v "${brdf_correction}" \
     ${SEN2COR_CONF}
-    
+
   xmlstarlet \
     ed -L \
     -u "//Level-2A_Ground_Image_Processing_Parameter/Atmospheric_Correction/Flags/BRDF_Lower_Bound" \
     -v "${brdf_lower_bound}" \
     ${SEN2COR_CONF}
-    
+
   xmlstarlet \
     ed -L \
     -u "//Level-2A_Ground_Image_Processing_Parameter/Atmospheric_Correction/Calibration/DEM_Unit" \
     -v "${dem_unit}" \
     ${SEN2COR_CONF}
-    
+
   xmlstarlet \
     ed -L \
     -u "//Level-2A_Ground_Image_Processing_Parameter/Atmospheric_Correction/Calibration/Adj_Km" \
     -v "${adj_km}" \
     ${SEN2COR_CONF}
-    
+
   xmlstarlet \
     ed -L \
     -u "//Level-2A_Ground_Image_Processing_Parameter/Atmospheric_Correction/Calibration/Visibility" \
     -v "${visibility}" \
     ${SEN2COR_CONF}
-    
+
   xmlstarlet \
     ed -L \
     -u "//Level-2A_Ground_Image_Processing_Parameter/Atmospheric_Correction/Calibration/Altitude" \
     -v "${altitude}" \
     ${SEN2COR_CONF}
-    
+
   xmlstarlet \
     ed -L \
     -u "//Level-2A_Ground_Image_Processing_Parameter/Atmospheric_Correction/Calibration/Smooth_WV_Map" \
     -v "${smooth_wv_map}" \
     ${SEN2COR_CONF}
-    
+
   xmlstarlet \
     ed -L \
     -u "//Level-2A_Ground_Image_Processing_Parameter/Atmospheric_Correction/Calibration/WV_Threshold_Cirrus" \
@@ -241,16 +243,16 @@ function process_2A() {
   local dem
   [ "$( ciop-getparam dem )" == "Yes" ] && {
 
-    ciop-log "INFO" "A DEM will be used"  
+    ciop-log "INFO" "A DEM will be used"
     # set dem path in ${SEN2COR_CONF}
     SEN2COR_DEM=${local_1c}/DEM
     mkdir -p ${SEN2COR_DEM}
-    
+
     # xmlstartlet
      xmlstarlet ed -L -u \
        "//Level-2A_Ground_Image_Processing_Parameter/Common_Section/DEM_Directory" \
        -v "${SEN2COR_DEM}" \
-       ${SEN2COR_CONF} 
+       ${SEN2COR_CONF}
   }
 
   granule_path=${identifier}.SAFE/GRANULE
@@ -266,7 +268,7 @@ function process_2A() {
   }
 
   ciop-log "INFO" "Invoke SEN2COR L2A_Process"
-  L2A_Process --resolution ${resolution} ${identifier}.SAFE 1>&2 # || return ${ERR_SEN2COR}
+  L2A_Process --resolution ${resolution} ${identifier}.SAFE 1>&2  || return ${ERR_SEN2COR}
 
   level_2a="$( echo ${identifier} | sed 's/OPER/USER/' | sed 's/MSIL1C/MSIL2A/' )"
 
@@ -276,7 +278,7 @@ function process_2A() {
 
     proj_win=$(get_projwin ${pa})
 
-    ciop-log "INFO" "Conversion to GeoTiff using proj_win ${proj_win}"    
+    ciop-log "INFO" "Conversion to GeoTiff using proj_win ${proj_win}"
 
     convert ${local_1c}/${identifier}.SAFE ${local_1c}/${level_2a}.SAFE ${format} ${proj_win}
 
@@ -301,7 +303,7 @@ function get_projwin() {
 
   #Changing y coord to make it compatible with gdal_translate ulx uly lrx lry
 
-  IFS=, read ulx lry lrx uly <<< "$( cat ${_CIOP_APPLICATION_PATH}/etc/pa.projwin | grep "${pa}" | cut -d "," -f 2- )"
+  IFS=, read ulx lrx lry uly <<< "$( cat ${_CIOP_APPLICATION_PATH}/etc/pa.projwin | grep "${pa}" | cut -d "," -f 2- )"
 
   win="${ulx},${uly},${lrx},${lry}"
 
@@ -314,7 +316,6 @@ function get_projwin() {
 }
 
 function get_short_pa() {
-
   local pa="$1"
   local short_pa
 
@@ -335,11 +336,15 @@ function main() {
   local format="$( ciop-getparam format )"
   local pa="$( ciop-getparam pa )"
   local dem
-  
-  # create sen2cor generic configuration 
+
+  # create sen2cor generic configuration
   prep_conf
 
-  local short_pa="$( get_short_pa ${pa} )"
+  ciop-log "INFO" "Input pa ${pa}"
+
+  local short_pa="$( get_short_pa "${pa}" )"
+
+  ciop-log "INFO" "Processing pa ${short_pa}"
 
   while read input
   do
@@ -358,17 +363,20 @@ function main() {
     results="$( process_2A ${ref} ${resolution} ${format} "${pa}" ${granules} || return $? )"
     res=$?
 
-    [ "${res}" != "0"  ] && return ${res}   
+    [ "${res}" != "0"  ] && return ${res}
 
     for result in $( echo ${results} | tr " " "\n" | grep -v png )
     do
-      echo "result: ${result}"
+      ciop-log "DEBUG" "result: ${result}"
       mission=$( echo ${identifier} | cut -c 1-3 )
+      ciop-log "DEBUG" "Mission: ${mission}"
       tile=$( basename ${result} | cut -d "_" -f 2 )
+      ciop-log "DEBUG" "Tile: ${tile}"
       acq_time=$( basename ${result} | cut -d "_" -f 3 )
+      ciop-log "DEBUG" "Acq_time: ${acq_time}"
       creaf_tail=$( basename ${result} | cut -d "_" -f 3- )
+      ciop-log "DEBUG" "Creaf tail: ${creaf_tail}"
       creaf_name=${mission}_MSIL2A_${tile}_${short_pa}_${creaf_tail}
-
       creaf_dir=${TMPDIR}/${mission}_MSIL2A_${tile}_${short_pa}_${acq_time}
       ciop-log "DEBUG" "creaf dir ${creaf_dir}"
       mkdir -p ${creaf_dir}
@@ -384,10 +392,10 @@ function main() {
       target_xml_md=${result}.xml
       cp /application/sen2cor/etc/eop-template.xml ${target_xml}
       cp /application/sen2cor/etc/md-template.xml ${target_xml_md}
-      
+
       ciop-log "DEBUG" "Checking creafdir"
 
-      tree ${creaf_dir} 
+      tree ${creaf_dir}
 
       # set identifier
       metadata \
@@ -502,7 +510,7 @@ function main() {
       "//A:MD_Metadata/A:contact/A:CI_ResponsibleParty/A:organisationName/B:CharacterString" \
       "TERRADUE" \
       ${target_xml_md}
-  
+
 
      metadata_iso \
       "//A:MD_Metadata/A:contact/A:CI_ResponsibleParty/A:contactInfo/A:CI_Contact/A:address/A:CI_Address/A:electronicMailAddress/B:CharacterString" \
@@ -513,7 +521,7 @@ function main() {
       "//A:MD_Metadata/A:dateStamp/B:Date" \
       "$( date +%Y-%m-%d )" \
      ${target_xml_md}
-  
+
      metadata_iso \
       "//A:MD_Metadata/A:spatialRepresentationInfo/A:MD_Georectified/A:axisDimensionProperties/A:MD_Dimension[A:dimensionName/A:MD_DimensionNameTypeCode/text()=\"Row\"]/A:dimensionSize/B:Integer" \
       "${row_size}" \
@@ -623,7 +631,7 @@ function main() {
       "//A:MD_Metadata/A:distributionInfo/A:MD_Distribution/A:distributor/A:MD_Distributor/A:distributorContact/A:CI_ResponsibleParty/A:organisationName/B:CharacterString" \
       "CNR" \
       ${target_xml_md}
-     
+
      values="Filters \ Median_Filter: 0
 Atmospheric_Correction \ Look_Up_Tables \ Aerosol_Type: $( ciop-getparam aerosol_type )
 Atmospheric_Correction \ Look_Up_Tables \ Mid_Latitude: $( ciop-getparam mid_latitude )
@@ -649,11 +657,11 @@ Atmospheric_Correction \ Calibration \ WV_Threshold_Cirrus: $( ciop-getparam wv_
      metadata_iso \
       "//A:MD_Metadata/A:identificationInfo/A:MD_DataIdentification/A:extent/A:EX_Extent/A:geographicElement/A:EX_GeographicDescription/A:geographicIdentifier/A:MD_Identifier/A:code/B:CharacterString" \
       "${pa}" \
-      ${target_xml_md} 
+      ${target_xml_md}
 
 
    done
- 
+
     # compress and publish
     cd ${TMPDIR}
     for res_dir in $( cat ${TMPDIR}/results | sort -u )
@@ -662,18 +670,17 @@ Atmospheric_Correction \ Calibration \ WV_Threshold_Cirrus: $( ciop-getparam wv_
       cp ${SEN2COR_CONF} ${res_dir}/$( basename ${res_dir} )_L2A_GIPP.xml
 
       ciop-log "INFO" "Compress ${res_dir}"
-      tar -czf ${res_dir}.tgz -C ${TMPDIR} $( basename ${res_dir} ) 
+      tar -czf ${res_dir}.tgz -C ${TMPDIR} $( basename ${res_dir} )
       ciop-log "INFO" "Publish ${res_dir}.tgz"
       ciop-publish -m ${res_dir}.tgz || return ${ERR_PUBLISH}
-      
+
       rm -fr ${res_dir} ${res_dir}.tgz
 
     done
-   
-    rm -f ${TMPDIR}/results 
-    rm -fr ${TMPDIR}/${identifier}
 
-    tree ${TMPDIR}   
+   # rm -f ${TMPDIR}/results
+   # rm -fr ${TMPDIR}/${identifier}
+
 
   done
 
@@ -684,7 +691,7 @@ function metadata() {
   local xpath="$1"
   local value="$2"
   local target_xml="$3"
- 
+
   xmlstarlet ed -L \
     -N A="http://www.opengis.net/opt/2.1" \
     -N B="http://www.opengis.net/om/2.0" \
@@ -693,7 +700,7 @@ function metadata() {
     -u  "${xpath}" \
     -v "${value}" \
     ${target_xml}
- 
+
 }
 
 function metadata_iso() {
@@ -701,7 +708,7 @@ function metadata_iso() {
   local value="$2"
   local target_xml="$3"
 
-  # TODO 
+  # TODO
   xmlstarlet ed -L \
    -N A="http://www.isotc211.org/2005/gmd" \
    -N B="http://www.isotc211.org/2005/gco" \
